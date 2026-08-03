@@ -86,12 +86,14 @@ src/
 │   └── validation/      Befundtypen und Prüfungen (eine Datei je Prüfung)
 ├── data/                Datenzugriff — Ein- und Ausgabe
 │   ├── csv/             RFC-4180-Parser und Abbildung auf B_05.01 / B_05.02
+│   ├── storage/         Ablage im Browser (localStorage, mit Schema-Version)
 │   └── generator/       Generator für synthetische Register
 ├── presentation/        Darstellung
 │   ├── graph/           Layout-Modell und dagre-Geometrie (beide UI-frei)
 │   ├── components/      React-Komponenten
 │   └── i18n/            sämtliche deutschen Texte
 ├── app/                 Kompositionswurzel (Vite-Einstieg, App-Shell)
+│   └── state/           Reducer der Eingabemaske (rein, ohne React)
 └── testing/             Testbausteine (Register-Builder)
 ```
 
@@ -160,6 +162,31 @@ zusätzlich akzeptieren, ohne die Domäne zu berühren.
 
 ---
 
+## Pflege im Werkzeug
+
+Neben dem Beispielregister lässt sich ein eigenes Register erfassen: Finanzunternehmen,
+Dienstleister (B_05.01), Verträge und Beziehungen (B_05.02).
+
+Der **Rang ist kein Eingabefeld**. Gepflegt wird die Beziehung — wer beauftragt wen, in welchem
+Vertrag —, und der berechnete Rang erscheint live, während die Auswahl getroffen wird. Genau ein
+Rang lässt sich eintippen: der **gemeldete**, und zwar ausschließlich, damit das Werkzeug beim
+Abtippen eines Bestandseintrags etwas zum Vergleichen hat. Bleibt das Feld leer, gibt es keinen
+Vergleich und keinen Befund.
+
+Zwei Regeln der Bearbeitung sind bewusst gesetzt und in `app/state/editorState.ts` als Test
+festgehalten:
+
+- Wird ein Dienstleister gelöscht, verschwinden seine Beziehungen mit ihm. Sie stehen zu lassen
+  würde eine gewollte Löschung in eine hängende Referenz verwandeln — also in einen Befund, der
+  eine schlecht gepflegte Meldung behauptet, wo in Wahrheit nur gelöscht wurde.
+- Eine Kennung bezeichnet genau einen Dienstleister. Ein erneutes Speichern derselben Kennung
+  ersetzt den Stammdatensatz, statt einen zweiten anzulegen.
+
+Das Register liegt im `localStorage` des Browsers, versehen mit einer Schema-Version. Ohne Backend
+ist das die einzig mögliche Persistenz — und die passende: Die Daten verlassen den Rechner nicht.
+Ein Stand, der sich nicht vollständig und in der erwarteten Version lesen lässt, wird verworfen
+statt repariert.
+
 ## Setup
 
 Voraussetzung: Node.js ≥ 20.
@@ -196,12 +223,13 @@ Dieser Schritt liefert das tragende Gerüst, noch keine fertige Anwendung.
 - Generator für synthetische Register, seed-basiert reproduzierbar, mit gezielter Fehlerinjektion
 - Graphdarstellung mit React Flow, Ebenen über den berechneten Rang, Layout mit dagre; Befunde sind
   am Knoten markiert, Umschalter je Vertrag, Rangtabelle als Textalternative
+- Eingabemaske für Dienstleister, Verträge und Beziehungen, mit Speicherung im Browser und
+  CSV-Export beider Meldevorlagen
 
 **Offen**
 
-- Dateiauswahl und Download in der Oberfläche
-- Pflege der Beziehungen im Werkzeug selbst
-- Export eines korrigierten Registers mit berechneten Rängen
+- CSV-Dateiauswahl in der Oberfläche (der Import selbst funktioniert bereits)
+- Export eines korrigierten Registers mit berechneten statt gemeldeten Rängen
 
 **Nicht Teil des Projekts:** die übrigen Meldevorlagen, xBRL-CSV, aufsichtliche Meldeformate.
 

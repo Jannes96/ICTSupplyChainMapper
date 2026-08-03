@@ -1,4 +1,5 @@
 import type { CsvIssue } from '../../data/csv/registerCsv.ts';
+import type { CodeType, PersonType } from '../../domain/model/register.ts';
 import type { Finding, Severity } from '../../domain/validation/Finding.ts';
 
 /**
@@ -8,6 +9,18 @@ import type { Finding, Severity } from '../../domain/validation/Finding.ts';
  * interface. Tests therefore assert on codes, never on prose, and the texts can
  * be reworded without touching a single test.
  */
+
+export const CODE_TYPE_LABELS: Record<CodeType, string> = {
+  LEI: 'LEI',
+  EUID: 'EUID',
+  INTERNAL: 'Interne Kennung',
+};
+
+export const PERSON_TYPE_LABELS: Record<PersonType, string> = {
+  LEGAL_PERSON: 'Juristische Person',
+  NATURAL_PERSON: 'Natürliche Person',
+  OTHER: 'Sonstige',
+};
 
 export const SEVERITY_LABELS: Record<Severity, string> = {
   error: 'Fehler',

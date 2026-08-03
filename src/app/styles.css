@@ -377,3 +377,188 @@ code,
 .details .ranks {
   margin-top: 0.8rem;
 }
+
+/* --- Eingabemaske -------------------------------------------------------- */
+
+button {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--bg);
+  background: var(--fg);
+  border: 1px solid var(--fg);
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.ghost {
+  color: var(--fg);
+  background: transparent;
+  border-color: var(--line);
+}
+
+button.danger {
+  color: var(--error);
+  border-color: var(--line);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin: 1.5rem 0 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -1px;
+  padding: 0.4rem 0.9rem;
+}
+
+.tab--active {
+  color: var(--fg);
+  border-color: var(--line);
+  background: var(--bg);
+}
+
+.editor {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.editor-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem 1.1rem;
+}
+
+.editor-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem 0.9rem;
+  align-items: end;
+  margin: 0.6rem 0 1rem;
+}
+
+.form-grid__wide {
+  grid-column: span 2;
+}
+
+.form-grid__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.hint {
+  font-style: italic;
+}
+
+input,
+select {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 1px;
+}
+
+.toggle,
+.select {
+  flex-direction: row;
+}
+
+.preview {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.preview--deviation {
+  color: var(--error);
+}
+
+.grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+}
+
+.grid th,
+.grid td {
+  border-top: 1px solid var(--line);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+.grid thead th {
+  color: var(--muted);
+  font-weight: 500;
+  border-top: none;
+}
+
+.grid__actions {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.cell--deviation {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
