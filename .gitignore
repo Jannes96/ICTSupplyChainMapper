@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.local
+.DS_Store
+.vscode/
+!.vscode/extensions.json
+
+# lokale Werkzeug-Konfiguration, gehört nicht ins Portfolio-Repo
+.claude/
