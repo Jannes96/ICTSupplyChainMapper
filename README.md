@@ -89,7 +89,8 @@ src/
 │   ├── storage/         Ablage im Browser (localStorage, mit Schema-Version)
 │   └── generator/       Generator für synthetische Register
 ├── presentation/        Darstellung
-│   ├── graph/           Layout-Modell und dagre-Geometrie (beide UI-frei)
+│   ├── graph/           Layout-Modell, dagre-Geometrie, radiales Layout
+│   │                    (alle drei UI-frei und einzeln getestet)
 │   ├── components/      React-Komponenten
 │   └── i18n/            sämtliche deutschen Texte
 ├── app/                 Kompositionswurzel (Vite-Einstieg, App-Shell)
@@ -162,6 +163,40 @@ zusätzlich akzeptieren, ohne die Domäne zu berühren.
 
 ---
 
+### Die radiale Ansicht
+
+Das Ebenendiagramm stößt an eine Grenze: Ein Vertrag mit hundert Unterauftragnehmern stellt hundert
+Kästen nebeneinander. Deshalb lässt sich jede Kette über einen Button in einem **eigenen Fenster**
+als radiales Sankey-Diagramm öffnen.
+
+Das Finanzunternehmen sitzt im Zentrum, jeder Rang ist ein Ring. Der Platz für einen Rang wächst
+damit mit seinem Abstand zur Mitte — also genau dort, wo die Knoten sich häufen.
+
+Der Sankey-Anteil ist die Breite: **Ein Band ist so breit wie die Zahl der Dienstleister, die daran
+hängen**, den Unterauftragnehmer selbst eingerechnet. Sitzen achtzig von hundert Dienstleistern
+hinter einem einzigen Rang-1-Dienstleister, nimmt dessen Band achtzig Prozent des Kreises ein.
+Konzentration in der Kette wird zur Form statt zur Zahl in einer Tabelle.
+
+Bänder sind Winkelbereiche, keine frei laufenden Schleifen: Der Winkel eines Knotens wird unter
+seinen Unterauftragnehmern nach Gewicht aufgeteilt. Dadurch teilen die Bänder ihren Elternknoten
+exakt auf und können sich weder überlappen noch kreuzen.
+
+Damit man sich in hundert Knoten zurechtfindet:
+
+- Auf einen Knoten zeigen leuchtet seinen **gesamten Weg zum Finanzunternehmen** aus und blendet
+  alles andere ab; ein Feld nennt Rang, Sitzland, Befunde und die Kette als Text.
+- Die **Suche** markiert alle Dienstleister, deren Name oder Kennung passt.
+- Beschriftungen stehen tangential im eigenen Ringsegment und nur, wenn die Bogenlänge reicht.
+  Alles Engere wird über den Hover gelesen statt über einen Text, der andere Ringe kreuzt.
+- Ein Dienstleister mit mehreren Auftraggebern bekommt eine Sehne durch die Mitte. Die sind
+  standardmäßig ausgeblendet — bei hundert Knoten begraben sie sonst das Zentrum.
+
+Das Fenster ist ein **zweiter Einstiegspunkt mit eigener URL** (`#kette?quelle=…&vertrag=…`), kein
+Portal in das Ausgangsdokument: Es übersteht ein Neuladen, lässt sich auf einen zweiten Bildschirm
+ziehen und baut das Register aus den Parametern neu auf. Beim Beispielregister funktioniert das,
+weil der Generator seed-basiert ist; ein selbst erfasstes Register kommt aus derselben lokalen
+Ablage, in die das Hauptfenster schreibt.
+
 ## Pflege im Werkzeug
 
 Neben dem Beispielregister lässt sich ein eigenes Register erfassen: Finanzunternehmen,
@@ -225,6 +260,8 @@ Dieser Schritt liefert das tragende Gerüst, noch keine fertige Anwendung.
   am Knoten markiert, Umschalter je Vertrag, Rangtabelle als Textalternative
 - Eingabemaske für Dienstleister, Verträge und Beziehungen, mit Speicherung im Browser und
   CSV-Export beider Meldevorlagen
+- radiales Sankey-Diagramm in einem eigenen Fenster, für Ketten mit hundert Dienstleistern, mit
+  Pfadverfolgung und Suche
 
 **Offen**
 

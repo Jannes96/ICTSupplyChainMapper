@@ -101,21 +101,49 @@ function generateChain(
   }
 
   for (let rank = 2; rank <= maxDepth; rank++) {
-    const nextLevel = take(random.int(1, maxBranching));
-    if (nextLevel.length === 0) break;
+    const nextLevel: Provider[] = [];
 
-    for (const provider of nextLevel) {
-      // One or two parents from the level above: the graph is a DAG, not a tree,
-      // and a provider with two mandates in the same chain is realistic.
-      const parents = random.shuffle(currentLevel).slice(0, random.bool(0.25) ? 2 : 1);
-      for (const parent of parents) {
+    // Branching is per provider, not per level: every provider subcontracts to
+    // between none and `maxBranching` others. That is what makes a chain widen as
+    // it deepens — and what lets a large pool actually produce a large chain.
+    for (const parent of currentLevel) {
+      for (const provider of take(random.int(0, maxBranching))) {
+        nextLevel.push(provider);
         links.push({
           contractRef: ref,
           providerId: provider.id,
           contractedBy: parent.id,
           reportedRank: rank,
         });
+
+        // Occasionally a second mandate from the same level: the graph is a DAG,
+        // not a tree, and a provider serving two clients in one chain is real.
+        if (random.bool(0.2) && currentLevel.length > 1) {
+          const second = random.pick(currentLevel.filter((item) => item.id !== parent.id));
+          links.push({
+            contractRef: ref,
+            providerId: provider.id,
+            contractedBy: second.id,
+            reportedRank: rank,
+          });
+        }
       }
+    }
+
+    // Every provider may draw zero subcontractors, so a whole level can come up
+    // empty by chance. Force one relationship in that case: the chain should end
+    // because the pool is exhausted, not because of an unlucky roll.
+    if (nextLevel.length === 0) {
+      const [forced] = take(1);
+      if (!forced) break;
+      const parent = random.pick(currentLevel);
+      nextLevel.push(forced);
+      links.push({
+        contractRef: ref,
+        providerId: forced.id,
+        contractedBy: parent.id,
+        reportedRank: rank,
+      });
     }
 
     currentLevel = nextLevel;
@@ -147,14 +175,18 @@ function injectFaults(register: Register, faults: FaultOptions, random: SeededRa
     links[index] = { ...(links[index] as SupplyChainLink), reportedRank: null };
   }
 
-  for (let n = 0; n < (faults.cycles ?? 0); n++) {
-    // Turn a rank-1 provider into a subcontractor of one of its own descendants.
-    const index = pickIndex((link) => link.reportedRank === 1);
-    if (index === null) break;
-    const link = links[index] as SupplyChainLink;
-    const descendant = links.find(
+  const subcontractorOf = (link: SupplyChainLink): SupplyChainLink | undefined =>
+    links.find(
       (candidate) => candidate.contractRef === link.contractRef && candidate.contractedBy === link.providerId,
     );
+
+  for (let n = 0; n < (faults.cycles ?? 0); n++) {
+    // Turn a rank-1 provider into a subcontractor of one of its own descendants.
+    // Not every direct provider subcontracts, so only those that do are eligible.
+    const index = pickIndex((link) => link.reportedRank === 1 && subcontractorOf(link) !== undefined);
+    if (index === null) break;
+    const link = links[index] as SupplyChainLink;
+    const descendant = subcontractorOf(link);
     if (!descendant) break;
     links[index] = { ...link, contractedBy: descendant.providerId };
   }

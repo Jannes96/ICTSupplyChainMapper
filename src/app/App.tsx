@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
-import { generateRegister, DEMO_FINANCIAL_ENTITY } from '../data/generator/generateRegister.ts';
+import { DEMO_FINANCIAL_ENTITY } from '../data/generator/generateRegister.ts';
 import {
   clearEditorState,
   loadEditorState,
@@ -11,7 +11,23 @@ import { FindingList } from '../presentation/components/FindingList.tsx';
 import { RegisterEditor } from '../presentation/components/RegisterEditor.tsx';
 import { SupplyChainDiagram } from '../presentation/components/SupplyChainDiagram.tsx';
 import { toLayoutGraph } from '../presentation/graph/layoutModel.ts';
+import { buildChainWindowHash, type ChainWindowParams } from './ChainWindow.tsx';
+import { buildDemoRegister } from './demoRegister.ts';
 import { editorReducer, emptyEditorState, toRegister, type EditorState } from './state/editorState.ts';
+
+/**
+ * Opens the radial view in a window of its own.
+ *
+ * The window gets a URL rather than a reference into this document: it survives a
+ * reload, can be dropped on a second screen and rebuilds the register from the
+ * parameters. Naming the window means a second click reuses it instead of
+ * scattering copies across the desktop.
+ */
+function openChainWindow(params: ChainWindowParams): void {
+  const url = new URL(window.location.href);
+  url.hash = buildChainWindowHash(params);
+  window.open(url.toString(), `kette-${params.source}`, 'popup=yes,width=1320,height=960');
+}
 
 type Mode = 'demo' | 'own';
 
@@ -43,20 +59,7 @@ export function App() {
     saveEditorState(window.localStorage, editorState);
   }, [editorState]);
 
-  const demoReport = useMemo(
-    () =>
-      validateRegister(
-        generateRegister({
-          seed: 42,
-          contractCount: 3,
-          maxDepth: 4,
-          faults: withFaults
-            ? { rankDeviations: 2, cycles: 1, orphans: 1, danglingReferences: 1, missingRanks: 1 }
-            : undefined,
-        }),
-      ),
-    [withFaults],
-  );
+  const demoReport = useMemo(() => validateRegister(buildDemoRegister(withFaults)), [withFaults]);
 
   const ownReport = useMemo(() => validateRegister(toRegister(editorState)), [editorState]);
   const report = mode === 'demo' ? demoReport : ownReport;
@@ -117,6 +120,19 @@ export function App() {
             />
             Beispielregister mit eingebauten Fehlern
           </label>
+          <p className="note">
+            <button
+              type="button"
+              className="ghost"
+              onClick={() =>
+                openChainWindow({ source: 'demo-large', withFaults: false, contractRef: null })
+              }
+            >
+              Beispiel mit 100 Dienstleistern öffnen
+            </button>{' '}
+            — zeigt, wofür die radiale Ansicht gedacht ist: eine Kette, die als Ebenendiagramm
+            unlesbar wird.
+          </p>
         </section>
       ) : (
         <RegisterEditor
@@ -146,16 +162,33 @@ export function App() {
         <section>
           <div className="section-head">
             <h2>Lieferkette</h2>
-            <label className="select">
-              Vertrag
-              <select value={contract.ref} onChange={(event) => setSelectedRef(event.target.value)}>
-                {report.contracts.map((item) => (
-                  <option key={item.ref} value={item.ref}>
-                    {item.ref} ({item.links.length} Beziehungen)
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="section-head__tools">
+              <label className="select">
+                Vertrag
+                <select
+                  value={contract.ref}
+                  onChange={(event) => setSelectedRef(event.target.value)}
+                >
+                  {report.contracts.map((item) => (
+                    <option key={item.ref} value={item.ref}>
+                      {item.ref} ({item.links.length} Beziehungen)
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  openChainWindow({
+                    source: mode === 'demo' ? 'demo' : 'own',
+                    withFaults,
+                    contractRef: contract.ref,
+                  })
+                }
+              >
+                Als Sankey in eigenem Fenster
+              </button>
+            </div>
           </div>
 
           <p className="note">
