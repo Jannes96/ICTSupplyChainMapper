@@ -549,6 +549,22 @@ button:focus-visible {
   font-weight: 600;
 }
 
+/* The row under edit and the form that edits it are marked as belonging together. */
+.row--editing > td {
+  background: color-mix(in oklab, var(--info) 14%, transparent);
+}
+
+.form-grid--editing {
+  border-left: 3px solid var(--info);
+  padding-left: 0.7rem;
+}
+
+.hint-error {
+  flex: 1 1 16rem;
+  font-size: 0.75rem;
+  color: var(--error);
+}
+
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.75rem;

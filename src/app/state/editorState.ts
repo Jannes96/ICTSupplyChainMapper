@@ -27,9 +27,13 @@ export type EditorAction =
   | { type: 'provider/upsert'; provider: Provider }
   | { type: 'provider/remove'; id: NodeId }
   | { type: 'contract/add'; ref: ContractRef }
+  /** Changes a contract reference and carries all of its rows along. */
+  | { type: 'contract/rename'; from: ContractRef; to: ContractRef }
   | { type: 'contract/remove'; ref: ContractRef }
   /** Adds the relationship, or updates the reported rank of an identical one. */
   | { type: 'link/upsert'; link: SupplyChainLink }
+  /** Edits an existing relationship in place — including who contracts whom. */
+  | { type: 'link/replace'; previous: SupplyChainLink; next: SupplyChainLink }
   | { type: 'link/remove'; link: SupplyChainLink }
   | { type: 'state/replace'; state: EditorState };
 
@@ -67,6 +71,22 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         ? state
         : { ...state, contractRefs: [...state.contractRefs, action.ref] };
 
+    case 'contract/rename': {
+      if (action.from === action.to) return state;
+      // Renaming onto an existing reference would silently merge two chains into
+      // one, and a merged chain computes different ranks. The caller has to
+      // delete or rename the other contract first.
+      if (state.contractRefs.includes(action.to)) return state;
+
+      return {
+        ...state,
+        contractRefs: state.contractRefs.map((ref) => (ref === action.from ? action.to : ref)),
+        links: state.links.map((link) =>
+          link.contractRef === action.from ? { ...link, contractRef: action.to } : link,
+        ),
+      };
+    }
+
     case 'contract/remove':
       return {
         ...state,
@@ -84,6 +104,26 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         contractRefs: state.contractRefs.includes(action.link.contractRef)
           ? state.contractRefs
           : [...state.contractRefs, action.link.contractRef],
+      };
+    }
+
+    case 'link/replace': {
+      // The edited row keeps its place in the list. If the new shape collides
+      // with another existing row, that one gives way — otherwise editing would
+      // be a way to produce the duplicate that `link/upsert` prevents.
+      const withoutCollision = state.links.filter(
+        (link) =>
+          isSameRelationship(link, action.previous) || !isSameRelationship(link, action.next),
+      );
+
+      return {
+        ...state,
+        links: withoutCollision.map((link) =>
+          isSameRelationship(link, action.previous) ? action.next : link,
+        ),
+        contractRefs: state.contractRefs.includes(action.next.contractRef)
+          ? state.contractRefs
+          : [...state.contractRefs, action.next.contractRef],
       };
     }
 
@@ -139,8 +179,16 @@ export function fromRegister(register: Register): EditorState {
  * rather than by adding one to the client's rank — a provider may already be
  * reachable on a longer path, and the longest one decides.
  */
-export function previewRank(state: EditorState, candidate: SupplyChainLink): Rank {
-  const prospective: EditorState = { ...state, links: [...state.links, candidate] };
+export function previewRank(
+  state: EditorState,
+  candidate: SupplyChainLink,
+  /** The row being edited, so the preview does not count the old one as well. */
+  replacing?: SupplyChainLink,
+): Rank {
+  const base = replacing
+    ? state.links.filter((link) => !isSameRelationship(link, replacing))
+    : state.links;
+  const prospective: EditorState = { ...state, links: [...base, candidate] };
   const contract = analyzeContracts(toRegister(prospective)).find(
     (item) => item.ref === candidate.contractRef,
   );

@@ -57,6 +57,31 @@ describe('editorReducer', () => {
       expect(editorReducer(base, { type: 'contract/add', ref: c('C1') })).toBe(base);
     });
 
+    it('renames a contract and carries its relationships along', () => {
+      const next = editorReducer(base, { type: 'contract/rename', from: c('C1'), to: c('C9') });
+
+      expect(next.contractRefs).toEqual([c('C9')]);
+      expect(next.links.map((item) => item.contractRef)).toEqual([c('C9'), c('C9')]);
+      expect(next.links.map((item) => item.providerId)).toEqual([n('A'), n('B')]);
+    });
+
+    it('refuses to rename onto an existing reference instead of merging two chains', () => {
+      // Merging would put two chains into one graph, where the ranks are
+      // different numbers — silently, and in the direction of a wrong report.
+      const twoContracts = editorReducer(base, {
+        type: 'link/upsert',
+        link: link('C2', 'A', null, 1),
+      });
+
+      expect(editorReducer(twoContracts, { type: 'contract/rename', from: c('C1'), to: c('C2') })).toBe(
+        twoContracts,
+      );
+    });
+
+    it('ignores a rename onto the same reference', () => {
+      expect(editorReducer(base, { type: 'contract/rename', from: c('C1'), to: c('C1') })).toBe(base);
+    });
+
     it('removes the contract with all of its relationships', () => {
       const next = editorReducer(base, { type: 'contract/remove', ref: c('C1') });
 
@@ -91,6 +116,29 @@ describe('editorReducer', () => {
       const next = editorReducer(base, { type: 'link/remove', link: link('C1', 'B', 'A', 2) });
 
       expect(next.links).toEqual([link('C1', 'A', null, 1)]);
+    });
+
+    it('edits a relationship in place, keeping its position in the list', () => {
+      const next = editorReducer(base, {
+        type: 'link/replace',
+        previous: link('C1', 'B', 'A', 2),
+        next: link('C1', 'B', null, 1),
+      });
+
+      expect(next.links).toEqual([link('C1', 'A', null, 1), link('C1', 'B', null, 1)]);
+    });
+
+    it('lets the edited row displace one it collides with', () => {
+      // B is contracted by A and directly. Editing the first into the second
+      // must leave one row, not two identical ones.
+      const withBoth = editorReducer(base, { type: 'link/upsert', link: link('C1', 'B', null, 1) });
+      const next = editorReducer(withBoth, {
+        type: 'link/replace',
+        previous: link('C1', 'B', 'A', 2),
+        next: link('C1', 'B', null, 1),
+      });
+
+      expect(next.links).toEqual([link('C1', 'A', null, 1), link('C1', 'B', null, 1)]);
     });
   });
 
@@ -130,6 +178,12 @@ describe('previewRank', () => {
   it('reports no rank when the relationship would close a cycle', () => {
     // A already contracts B, so letting B contract A closes A → B → A.
     expect(previewRank(base, link('C1', 'A', 'B', null))).toBeNull();
+  });
+
+  it('ignores the row being edited, so the old one is not counted twice', () => {
+    // B currently hangs off A at rank 2. Moving it under the financial entity
+    // has to preview rank 1 — with the old row still in play it would stay 2.
+    expect(previewRank(base, link('C1', 'B', null, null), link('C1', 'B', 'A', 2))).toBe(1);
   });
 
   it('leaves the state untouched', () => {

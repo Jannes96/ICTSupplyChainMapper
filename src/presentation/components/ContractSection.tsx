@@ -31,9 +31,12 @@ export function ContractSection({
   onSelect,
 }: ContractSectionProps) {
   const [newContract, setNewContract] = useState('');
+  const [renameTo, setRenameTo] = useState('');
   const [providerId, setProviderId] = useState('');
   const [contractedBy, setContractedBy] = useState('');
   const [reportedRank, setReportedRank] = useState('');
+  /** The row currently being edited, or `null` while a new one is entered. */
+  const [editing, setEditing] = useState<SupplyChainLink | null>(null);
 
   const activeRef = selectedRef ?? state.contractRefs[0] ?? null;
   const analysis = contracts.find((contract) => contract.ref === activeRef) ?? null;
@@ -49,17 +52,39 @@ export function ContractSection({
           reportedRank: reportedRank === '' ? null : Number(reportedRank),
         };
 
-  const preview = candidate ? previewRank(state, candidate) : null;
+  // While editing, the row under the cursor must be left out of the preview —
+  // otherwise the old relationship keeps propping up the old rank.
+  const preview = candidate ? previewRank(state, candidate, editing ?? undefined) : null;
   const wouldDeviate =
     candidate?.reportedRank != null && preview !== null && candidate.reportedRank !== preview;
 
-  const addLink = (): void => {
-    if (!candidate) return;
-    dispatch({ type: 'link/upsert', link: candidate });
+  const resetForm = (): void => {
+    setEditing(null);
     setProviderId('');
     setContractedBy('');
     setReportedRank('');
   };
+
+  const submitLink = (): void => {
+    if (!candidate) return;
+    if (editing) dispatch({ type: 'link/replace', previous: editing, next: candidate });
+    else dispatch({ type: 'link/upsert', link: candidate });
+    resetForm();
+  };
+
+  const startEditing = (link: SupplyChainLink): void => {
+    setEditing(link);
+    setProviderId(link.providerId);
+    setContractedBy(link.contractedBy ?? '');
+    setReportedRank(link.reportedRank === null ? '' : String(link.reportedRank));
+  };
+
+  const trimmedRename = renameTo.trim();
+  const canRename =
+    activeRef !== null &&
+    trimmedRename !== '' &&
+    trimmedRename !== activeRef &&
+    !state.contractRefs.includes(contractRef(trimmedRename));
 
   return (
     <section className="editor-block">
@@ -96,7 +121,14 @@ export function ContractSection({
           <div className="inline-form">
             <label>
               Vertrag
-              <select value={activeRef ?? ''} onChange={(event) => onSelect(event.target.value)}>
+              <select
+                value={activeRef ?? ''}
+                onChange={(event) => {
+                  onSelect(event.target.value);
+                  resetForm();
+                  setRenameTo('');
+                }}
+              >
                 {state.contractRefs.map((ref) => (
                   <option key={ref} value={ref}>
                     {ref}
@@ -116,6 +148,7 @@ export function ContractSection({
                     : `Vertrag ${activeRef} löschen? ${count} Beziehung(en) werden mit gelöscht.`;
                 if (window.confirm(question)) {
                   dispatch({ type: 'contract/remove', ref: contractRef(activeRef) });
+                  resetForm();
                 }
               }}
             >
@@ -124,10 +157,45 @@ export function ContractSection({
           </div>
 
           <form
-            className="form-grid"
+            className="inline-form"
             onSubmit={(event) => {
               event.preventDefault();
-              addLink();
+              if (!canRename || activeRef === null) return;
+              dispatch({
+                type: 'contract/rename',
+                from: contractRef(activeRef),
+                to: contractRef(trimmedRename),
+              });
+              onSelect(trimmedRename);
+              setRenameTo('');
+            }}
+          >
+            <label>
+              Vertragsreferenz ändern
+              <input
+                value={renameTo}
+                onChange={(event) => setRenameTo(event.target.value)}
+                placeholder={activeRef ?? ''}
+              />
+            </label>
+            <button type="submit" className="ghost" disabled={!canRename}>
+              Umbenennen
+            </button>
+            {trimmedRename !== '' &&
+              trimmedRename !== activeRef &&
+              state.contractRefs.includes(contractRef(trimmedRename)) && (
+                <span className="hint-error">
+                  {trimmedRename} existiert bereits. Zwei Verträge zusammenzuführen würde die Ränge
+                  verändern — bitte den anderen Vertrag zuerst löschen oder umbenennen.
+                </span>
+              )}
+          </form>
+
+          <form
+            className={editing ? 'form-grid form-grid--editing' : 'form-grid'}
+            onSubmit={(event) => {
+              event.preventDefault();
+              submitLink();
             }}
           >
             <label>
@@ -174,8 +242,13 @@ export function ContractSection({
 
             <div className="form-grid__actions">
               <button type="submit" disabled={!candidate}>
-                Beziehung aufnehmen
+                {editing ? 'Beziehung aktualisieren' : 'Beziehung aufnehmen'}
               </button>
+              {editing && (
+                <button type="button" className="ghost" onClick={resetForm}>
+                  Bearbeiten abbrechen
+                </button>
+              )}
             </div>
           </form>
 
@@ -199,8 +272,13 @@ export function ContractSection({
                   const computed = analysis?.ranks.get(link.providerId) ?? null;
                   const deviates = link.reportedRank !== null && link.reportedRank !== computed;
 
+                  const isEditing = editing !== null && isSameRow(editing, link);
+
                   return (
-                    <tr key={`${link.providerId}-${link.contractedBy ?? 'FU'}`}>
+                    <tr
+                      key={`${link.providerId}-${link.contractedBy ?? 'FU'}`}
+                      className={isEditing ? 'row--editing' : undefined}
+                    >
                       <td>{nameOf(state, link.providerId)}</td>
                       <td>
                         {link.contractedBy === null
@@ -214,10 +292,16 @@ export function ContractSection({
                         {formatRank(computed)}
                       </td>
                       <td className="grid__actions">
+                        <button type="button" className="ghost" onClick={() => startEditing(link)}>
+                          Bearbeiten
+                        </button>
                         <button
                           type="button"
                           className="ghost danger"
-                          onClick={() => dispatch({ type: 'link/remove', link })}
+                          onClick={() => {
+                            dispatch({ type: 'link/remove', link });
+                            if (isEditing) resetForm();
+                          }}
                         >
                           Entfernen
                         </button>
@@ -236,4 +320,11 @@ export function ContractSection({
 
 function nameOf(state: EditorState, id: string): string {
   return state.providers.find((provider) => provider.id === id)?.legalName ?? id;
+}
+
+/** Same row of B_05.02: same chain, same provider, same client. */
+function isSameRow(a: SupplyChainLink, b: SupplyChainLink): boolean {
+  return (
+    a.contractRef === b.contractRef && a.providerId === b.providerId && a.contractedBy === b.contractedBy
+  );
 }

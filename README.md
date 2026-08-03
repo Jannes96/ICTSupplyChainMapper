@@ -236,7 +236,12 @@ Rang lässt sich eintippen: der **gemeldete**, und zwar ausschließlich, damit d
 Abtippen eines Bestandseintrags etwas zum Vergleichen hat. Bleibt das Feld leer, gibt es keinen
 Vergleich und keinen Befund.
 
-Zwei Regeln der Bearbeitung sind bewusst gesetzt und in `app/state/editorState.ts` als Test
+Bestehendes lässt sich ändern, nicht nur anlegen und löschen: Eine **Vertragsreferenz kann
+umbenannt** werden und nimmt alle ihre Zeilen mit; eine **Beziehung lässt sich bearbeiten**,
+einschließlich der Frage, wer sie beauftragt. Beim Bearbeiten zeigt die Vorschau den Rang, den die
+Zeile *nach* der Änderung hätte.
+
+Vier Regeln der Bearbeitung sind bewusst gesetzt und in `app/state/editorState.ts` als Test
 festgehalten:
 
 - Wird ein Dienstleister gelöscht, verschwinden seine Beziehungen mit ihm. Sie stehen zu lassen
@@ -244,6 +249,12 @@ festgehalten:
   eine schlecht gepflegte Meldung behauptet, wo in Wahrheit nur gelöscht wurde.
 - Eine Kennung bezeichnet genau einen Dienstleister. Ein erneutes Speichern derselben Kennung
   ersetzt den Stammdatensatz, statt einen zweiten anzulegen.
+- Ein Vertrag lässt sich **nicht** auf eine bereits vergebene Referenz umbenennen. Das würde zwei
+  Ketten in einen Graphen legen, und in einem gemeinsamen Graphen sind die Ränge andere Zahlen —
+  stillschweigend und in Richtung einer falschen Meldung. Der andere Vertrag muss zuerst weichen.
+- Wird eine Zeile so bearbeitet, dass sie mit einer anderen zusammenfällt, weicht die andere.
+  Sonst wäre das Bearbeiten ein Weg, genau das Duplikat zu erzeugen, das beim Anlegen verhindert
+  wird.
 
 Das Register liegt im `localStorage` des Browsers, versehen mit einer Schema-Version. Ohne Backend
 ist das die einzig mögliche Persistenz — und die passende: Die Daten verlassen den Rechner nicht.
