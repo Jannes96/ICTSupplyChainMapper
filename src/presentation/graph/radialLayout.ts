@@ -194,6 +194,28 @@ export function ringOuterRadius(ring: number): number {
   return INNER_RADIUS + ring * RING_WIDTH;
 }
 
+/** Rough width of one character at the label font size, in diagram units. */
+export const LABEL_CHARACTER_WIDTH = 5.9;
+/** Shorter than this a label says nothing and is better left to the hover. */
+export const MIN_LABEL_CHARACTERS = 6;
+
+/**
+ * How many characters fit into a node's arc at the current zoom — `0` when the
+ * arc is too short to carry a label at all.
+ *
+ * The zoom is a factor rather than a constant because the label font is scaled
+ * down by the same amount when the view is magnified. The text therefore keeps
+ * its size on screen and grows *narrower* in diagram units, so zooming in reveals
+ * labels on the crowded outer rings instead of only enlarging the few that
+ * already fitted.
+ */
+export function labelCapacity(node: RadialNode, scale: number): number {
+  const midRadius = (node.innerRadius + node.outerRadius) / 2;
+  const arcLength = (node.endAngle - node.startAngle) * midRadius;
+  const capacity = Math.floor((arcLength * scale) / LABEL_CHARACTER_WIDTH);
+  return capacity < MIN_LABEL_CHARACTERS ? 0 : capacity;
+}
+
 /** Point on a circle around the origin. */
 export function polar(radius: number, angle: number): [number, number] {
   return [radius * Math.cos(angle), radius * Math.sin(angle)];

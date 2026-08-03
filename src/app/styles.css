@@ -684,17 +684,70 @@ button:focus-visible {
   stroke-width: 2;
 }
 
+/* No font-size here on purpose: the components set it per zoom level, and a CSS
+   rule would win over that presentation attribute and defeat the counter-scaling. */
 .radial__label,
 .radial__centre-label {
   fill: var(--muted);
-  font-size: 11px;
   pointer-events: none;
 }
 
 .radial__centre-label {
   fill: var(--bg);
-  font-size: 12px;
   font-weight: 600;
+}
+
+.radial__canvas svg {
+  cursor: grab;
+  touch-action: none;
+}
+
+.radial__canvas svg:active {
+  cursor: grabbing;
+}
+
+.radial__zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.radial__ranks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.radial__ranks-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-right: 0.2rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.chip--active {
+  color: var(--bg);
+  background: var(--info);
+  border-color: var(--info);
+}
+
+.chip__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
 }
 
 /* While something is highlighted, everything else steps back. */

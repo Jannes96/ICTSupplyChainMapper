@@ -3,7 +3,12 @@ import { nodeId } from '../../domain/model/ids.ts';
 import { validateRegister } from '../../domain/validation/validateRegister.ts';
 import { link, makeRegister, TEST_FINANCIAL_ENTITY } from '../../testing/registerBuilder.ts';
 import { toLayoutGraph } from './layoutModel.ts';
-import { annularSector, radialLayout } from './radialLayout.ts';
+import {
+  annularSector,
+  labelCapacity,
+  MIN_LABEL_CHARACTERS,
+  radialLayout,
+} from './radialLayout.ts';
 
 const n = nodeId;
 const FULL_TURN = Math.PI * 2;
@@ -151,6 +156,41 @@ describe('radialLayout', () => {
     const outer = layout.nodes.filter((node) => node.ring === 1);
     const covered = outer.reduce((sum, node) => sum + span(node), 0);
     expect(covered).toBeCloseTo(FULL_TURN);
+  });
+});
+
+describe('labelCapacity', () => {
+  const wide = layoutOf([link('C1', 'A', null, 1)]).nodes.find((node) => node.ring === 1);
+
+  it('fits more characters the wider the arc', () => {
+    const narrow = layoutOf(
+      Array.from({ length: 40 }, (_, index) => link('C1', `P${index}`, null, 1)),
+    ).nodes.find((node) => node.ring === 1);
+
+    expect(labelCapacity(wide as never, 1)).toBeGreaterThan(labelCapacity(narrow as never, 1));
+  });
+
+  it('refuses an arc too short to say anything', () => {
+    const crowded = layoutOf(
+      Array.from({ length: 120 }, (_, index) => link('C1', `P${index}`, null, 1)),
+    ).nodes.find((node) => node.ring === 1);
+
+    expect(labelCapacity(crowded as never, 1)).toBe(0);
+  });
+
+  it('reveals a label once the view is magnified far enough', () => {
+    // The point of counter-scaling the font: zooming in has to uncover labels,
+    // not merely enlarge the ones that already fitted.
+    const crowded = layoutOf(
+      Array.from({ length: 120 }, (_, index) => link('C1', `P${index}`, null, 1)),
+    ).nodes.find((node) => node.ring === 1);
+
+    expect(labelCapacity(crowded as never, 1)).toBe(0);
+    expect(labelCapacity(crowded as never, 8)).toBeGreaterThanOrEqual(MIN_LABEL_CHARACTERS);
+  });
+
+  it('scales the capacity with the zoom', () => {
+    expect(labelCapacity(wide as never, 2)).toBeCloseTo(labelCapacity(wide as never, 1) * 2, -1);
   });
 });
 

@@ -186,8 +186,16 @@ Damit man sich in hundert Knoten zurechtfindet:
 - Auf einen Knoten zeigen leuchtet seinen **gesamten Weg zum Finanzunternehmen** aus und blendet
   alles andere ab; ein Feld nennt Rang, Sitzland, Befunde und die Kette als Text.
 - Die **Suche** markiert alle Dienstleister, deren Name oder Kennung passt.
+- **Ränge lassen sich einzeln hervorheben** — ein Klick auf „Rang 3" hebt diese Ebene samt der
+  Bänder, die sie speisen, heraus und dämpft den Rest. Mehrere Ränge sind kombinierbar, und
+  Hervorhebung, Suche und Hover ergänzen sich, statt sich zu überschreiben.
+- **Zoom und Verschieben** per Mausrad (zum Zeiger hin), Ziehen oder über die Schaltflächen.
 - Beschriftungen stehen tangential im eigenen Ringsegment und nur, wenn die Bogenlänge reicht.
   Alles Engere wird über den Hover gelesen statt über einen Text, der andere Ringe kreuzt.
+  Die Schriftgröße wird beim Zoomen **gegenläufig skaliert**: Der Text behält seine Größe auf dem
+  Bildschirm und wird in Diagrammkoordinaten schmaler, sodass Hineinzoomen zusätzliche
+  Beschriftungen freilegt, statt nur die vorhandenen zu vergrößern. `labelCapacity` in
+  `radialLayout.ts` hält diese Regel als reine, getestete Funktion fest.
 - Ein Dienstleister mit mehreren Auftraggebern bekommt eine Sehne durch die Mitte. Die sind
   standardmäßig ausgeblendet — bei hundert Knoten begraben sie sonst das Zentrum.
 
