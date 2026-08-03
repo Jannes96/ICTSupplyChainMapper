@@ -88,7 +88,7 @@ src/
 │   ├── csv/             RFC-4180-Parser und Abbildung auf B_05.01 / B_05.02
 │   └── generator/       Generator für synthetische Register
 ├── presentation/        Darstellung
-│   ├── graph/           Layout-Modell (Vorbereitung für React Flow + dagre)
+│   ├── graph/           Layout-Modell und dagre-Geometrie (beide UI-frei)
 │   ├── components/      React-Komponenten
 │   └── i18n/            sämtliche deutschen Texte
 ├── app/                 Kompositionswurzel (Vite-Einstieg, App-Shell)
@@ -103,10 +103,26 @@ insbesondere kein React. Das hat drei praktische Konsequenzen:
 2. **Die Fachlichkeit ist sprachfrei.** Befunde tragen stabile englische Codes und strukturierte
    Daten; die deutschen Sätze entstehen erst in `presentation/i18n`. Tests prüfen Codes, nie Prosa.
 3. **Die Visualisierung ist austauschbar.** `presentation/graph/layoutModel.ts` erzeugt flache
-   Knoten- und Kantenlisten mit dem Rang als Ebene — React Flow und dagre docken dort an, ohne dass
-   `domain/` davon erfährt.
+   Knoten- und Kantenlisten mit dem Rang als Ebene, `dagreLayout.ts` daraus die Koordinaten. Beide
+   sind reine Funktionen und ohne DOM getestet; die React-Flow-Komponente rendert nur noch, was
+   herauskommt. `domain/` erfährt von alldem nichts.
 
-Graphalgorithmen sind bewusst selbst implementiert; es wird keine Graphbibliothek verwendet.
+Graphalgorithmen sind bewusst selbst implementiert; es wird keine Graphbibliothek verwendet. dagre
+wird ausschließlich für die Geometrie der Darstellung genutzt, nicht für die Fachlichkeit.
+
+### Wie die Ebene entsteht
+
+dagre liefert nur die **Reihenfolge** der Knoten innerhalb einer Ebene — die Minimierung der
+Kantenkreuzungen ist der mühsame Teil. Ebene und Abstände kommen aus dem Werkzeug selbst:
+
+- Die **y-Position folgt dem berechneten Rang**, nie dagres eigener Schichtung. dagre leitet seine
+  Ebenen aus den Kanten ab und würde einen mehrfach erreichbaren Knoten unter Umständen auf den
+  kürzeren Pfad legen. Der Rang ist hier aber als längster Pfad definiert, und das Diagramm muss
+  genau den Rang zeigen, den der Befund nennt.
+- Die **x-Abstände** werden ebenfalls selbst gesetzt. dagre hält Knoten nur innerhalb seiner eigenen
+  Ebenen auseinander; überall dort, wo unsere Schichtung abweicht, würden sich Kästen überlappen.
+- Knoten **ohne bestimmbaren Rang** (Zyklus oder unterbrochene Kette) haben keine eigene Ebene und
+  werden eine Stufe unter dem tiefsten Rang geparkt.
 
 ---
 
@@ -178,11 +194,11 @@ Dieser Schritt liefert das tragende Gerüst, noch keine fertige Anwendung.
 - alle acht Prüfungen mit Unit-Tests
 - CSV-Import und -Export für beide Meldevorlagen
 - Generator für synthetische Register, seed-basiert reproduzierbar, mit gezielter Fehlerinjektion
-- provisorische Oberfläche, die die Kette als Rangtabelle zeigt
+- Graphdarstellung mit React Flow, Ebenen über den berechneten Rang, Layout mit dagre; Befunde sind
+  am Knoten markiert, Umschalter je Vertrag, Rangtabelle als Textalternative
 
 **Offen**
 
-- Graphdarstellung mit React Flow, Layout über dagre (`npm i reactflow dagre`), Rang als Ebene
 - Dateiauswahl und Download in der Oberfläche
 - Pflege der Beziehungen im Werkzeug selbst
 - Export eines korrigierten Registers mit berechneten Rängen

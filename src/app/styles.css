@@ -172,3 +172,208 @@ code,
 .contract {
   font-variant-numeric: tabular-nums;
 }
+
+/* --- Diagramm ------------------------------------------------------------ */
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-head h2 {
+  flex: 1 1 auto;
+}
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.select select {
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.25rem 0.4rem;
+}
+
+.diagram {
+  height: 32rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* React Flow paints its own surface; keep it on the page background so the
+   diagram works in both colour schemes. */
+.diagram .react-flow__renderer,
+.diagram .react-flow__pane {
+  background: transparent;
+}
+
+.chain-node {
+  box-sizing: border-box;
+  width: 236px;
+  height: 88px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  overflow: hidden;
+}
+
+.chain-node--financial_entity {
+  border-left-color: var(--fg);
+  font-weight: 600;
+}
+
+.chain-node--provider {
+  border-left-color: var(--info);
+}
+
+.chain-node--unknown {
+  border-left-color: var(--muted);
+  border-style: dashed;
+}
+
+.chain-node--error {
+  border-color: var(--error);
+  border-left-color: var(--error);
+}
+
+.chain-node--warning {
+  border-color: var(--warning);
+  border-left-color: var(--warning);
+}
+
+.chain-node__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chain-node__rank {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chain-node__label {
+  font-size: 0.82rem;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* A flagged node spends its second label line on the finding instead. */
+.chain-node--error .chain-node__label,
+.chain-node--warning .chain-node__label {
+  -webkit-line-clamp: 1;
+}
+
+.chain-node__findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: var(--error);
+}
+
+.chain-node--warning .chain-node__findings {
+  color: var(--warning);
+}
+
+.chain-node__findings li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chain-node .react-flow__handle {
+  background: var(--line);
+  border: none;
+  width: 6px;
+  height: 6px;
+}
+
+.chain-edge .react-flow__edge-path {
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+
+.chain-edge--error .react-flow__edge-path {
+  stroke: var(--error);
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  border-left: 3px solid;
+  border-color: var(--line);
+}
+
+.swatch--root {
+  border-left-color: var(--fg);
+}
+.swatch--provider {
+  border-left-color: var(--info);
+}
+.swatch--error {
+  border-left-color: var(--error);
+}
+.swatch--warning {
+  border-left-color: var(--warning);
+}
+
+.details {
+  margin-top: 1.2rem;
+  font-size: 0.85rem;
+}
+
+.details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.details .ranks {
+  margin-top: 0.8rem;
+}

@@ -3,7 +3,7 @@ import type { Rank } from '../../domain/graph/computeRanks.ts';
 import type { NodeId } from '../../domain/model/ids.ts';
 import type { Register } from '../../domain/model/register.ts';
 import { providerIndex } from '../../domain/model/register.ts';
-import type { Finding } from '../../domain/validation/Finding.ts';
+import type { Finding, Severity } from '../../domain/validation/Finding.ts';
 
 /**
  * View model for the visualisation — prepared here, rendered later.
@@ -27,6 +27,8 @@ export interface LayoutNode {
   readonly country: string | null;
   /** Codes of the findings attached to this node — for highlighting. */
   readonly findingCodes: readonly Finding['code'][];
+  /** Most severe finding on this node, or `null` if it is unremarkable. */
+  readonly severity: Severity | null;
 }
 
 export interface LayoutEdge {
@@ -49,11 +51,12 @@ export function toLayoutGraph(
   findings: readonly Finding[] = [],
 ): LayoutGraph {
   const providers = providerIndex(register);
-  const findingCodesByNode = groupFindingCodes(findings, contract.ref);
+  const findingsByNode = groupFindings(findings, contract.ref);
 
   const nodes: LayoutNode[] = contract.graph.nodes.map((id) => {
     const provider = providers.get(id);
     const isRoot = id === contract.root;
+    const attached = findingsByNode.get(id);
 
     return {
       id,
@@ -61,7 +64,8 @@ export function toLayoutGraph(
       kind: isRoot ? 'financial_entity' : provider ? 'provider' : 'unknown',
       rank: contract.ranks.get(id) ?? null,
       country: isRoot ? register.financialEntity.country : (provider?.country ?? null),
-      findingCodes: findingCodesByNode.get(id) ?? [],
+      findingCodes: attached?.codes ?? [],
+      severity: attached?.severity ?? null,
     };
   });
 
@@ -96,27 +100,35 @@ function groupByRank(nodes: readonly LayoutNode[]): Array<{ rank: Rank; nodes: N
   return layers;
 }
 
-function groupFindingCodes(
-  findings: readonly Finding[],
-  contractRef: string,
-): Map<NodeId, Finding['code'][]> {
-  const byNode = new Map<NodeId, Finding['code'][]>();
+interface AttachedFindings {
+  codes: Finding['code'][];
+  severity: Severity;
+}
 
-  const add = (id: NodeId, code: Finding['code']): void => {
-    const codes = byNode.get(id);
-    if (codes) {
-      if (!codes.includes(code)) codes.push(code);
-    } else {
-      byNode.set(id, [code]);
+const SEVERITY_RANK: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
+
+function groupFindings(findings: readonly Finding[], contractRef: string): Map<NodeId, AttachedFindings> {
+  const byNode = new Map<NodeId, AttachedFindings>();
+
+  const add = (id: NodeId, finding: Finding): void => {
+    const attached = byNode.get(id);
+    if (!attached) {
+      byNode.set(id, { codes: [finding.code], severity: finding.severity });
+      return;
+    }
+    if (!attached.codes.includes(finding.code)) attached.codes.push(finding.code);
+    // A node is coloured by its worst finding.
+    if (SEVERITY_RANK[finding.severity] < SEVERITY_RANK[attached.severity]) {
+      attached.severity = finding.severity;
     }
   };
 
   for (const finding of findings) {
     if (finding.contractRef !== null && finding.contractRef !== contractRef) continue;
     if (finding.code === 'CYCLE_DETECTED') {
-      for (const id of finding.cycle) add(id, finding.code);
+      for (const id of finding.cycle) add(id, finding);
     } else {
-      add(finding.providerId, finding.code);
+      add(finding.providerId, finding);
     }
   }
 

@@ -78,6 +78,22 @@ describe('toLayoutGraph', () => {
     expect(layout.nodes.find((node) => node.id === n('A'))?.findingCodes).toEqual([]);
   });
 
+  it('colours a node by its most severe finding', () => {
+    // B carries both a missing rank (warning) and, through X, no computable
+    // rank (error). The error wins.
+    const layout = layoutOf(
+      makeRegister([
+        link('C1', 'A', null, 1),
+        link('C1', 'B', 'X', null),
+      ]),
+    );
+
+    const flagged = layout.nodes.find((node) => node.id === n('B'));
+    expect(flagged?.findingCodes).toContain('RANK_NOT_COMPUTABLE');
+    expect(flagged?.severity).toBe('error');
+    expect(layout.nodes.find((node) => node.id === n('A'))?.severity).toBeNull();
+  });
+
   it('exposes one edge per relationship, with a stable id', () => {
     const layout = layoutOf(makeRegister([link('C1', 'A', null, 1), link('C1', 'B', 'A', 2)]));
 
