@@ -199,9 +199,17 @@ Damit man sich in hundert Knoten zurechtfindet:
 - Ein Dienstleister mit mehreren Auftraggebern bekommt eine Sehne durch die Mitte. Die sind
   standardmäßig ausgeblendet — bei hundert Knoten begraben sie sonst das Zentrum.
 
-Das Fenster ist ein **zweiter Einstiegspunkt mit eigener URL** (`#kette?quelle=…&vertrag=…`), kein
-Portal in das Ausgangsdokument: Es übersteht ein Neuladen, lässt sich auf einen zweiten Bildschirm
-ziehen und baut das Register aus den Parametern neu auf. Beim Beispielregister funktioniert das,
+Im Fenster lässt sich zwischen **beiden Darstellungen** umschalten. Die radiale ist keine bessere
+Version der anderen: Bei einer kurzen Kette ist das Ebenendiagramm klarer, weil die Ränge in
+schlichten Zeilen stehen; die radiale spielt ihre Stärke erst aus, wenn ein Vertrag mehr
+Unterauftragnehmer hat, als in eine Zeile passen. Beide beziehen ihre Daten aus demselben
+Layout-Modell.
+
+Das Fenster ist ein **zweiter Einstiegspunkt mit eigener URL**
+(`#kette?quelle=…&vertrag=…&ansicht=…`), kein Portal in das Ausgangsdokument: Es übersteht ein
+Neuladen, lässt sich auf einen zweiten Bildschirm ziehen und baut das Register aus den Parametern
+neu auf. Vertrag und Darstellung werden dabei in die Adresse zurückgeschrieben, sodass ein Reload
+oder ein Lesezeichen genau dieselbe Ansicht wiederherstellt. Beim Beispielregister funktioniert das,
 weil der Generator seed-basiert ist; ein selbst erfasstes Register kommt aus derselben lokalen
 Ablage, in die das Hauptfenster schreibt.
 

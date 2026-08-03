@@ -598,6 +598,53 @@ button:focus-visible {
   margin: 0;
 }
 
+.window__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.tabs--compact {
+  margin: 0;
+  border-bottom: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.tabs--compact .tab {
+  margin-bottom: 0;
+  border-radius: 6px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.tabs--compact .tab--active {
+  background: var(--line);
+  border-color: transparent;
+}
+
+/* Both views fill whatever the header leaves over. */
+.window__view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0.8rem;
+}
+
+.window__view .radial {
+  margin-top: 0;
+}
+
+.window__view .diagram {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
 .radial {
   display: flex;
   flex-direction: column;

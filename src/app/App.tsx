@@ -125,7 +125,12 @@ export function App() {
               type="button"
               className="ghost"
               onClick={() =>
-                openChainWindow({ source: 'demo-large', withFaults: false, contractRef: null })
+                openChainWindow({
+                  source: 'demo-large',
+                  withFaults: false,
+                  contractRef: null,
+                  view: 'radial',
+                })
               }
             >
               Beispiel mit 100 Dienstleistern öffnen
@@ -183,6 +188,7 @@ export function App() {
                     source: mode === 'demo' ? 'demo' : 'own',
                     withFaults,
                     contractRef: contract.ref,
+                    view: 'radial',
                   })
                 }
               >
