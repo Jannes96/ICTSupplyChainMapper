@@ -190,12 +190,24 @@ Damit man sich in hundert Knoten zurechtfindet:
   Bänder, die sie speisen, heraus und dämpft den Rest. Mehrere Ränge sind kombinierbar, und
   Hervorhebung, Suche und Hover ergänzen sich, statt sich zu überschreiben.
 - **Zoom und Verschieben** per Mausrad (zum Zeiger hin), Ziehen oder über die Schaltflächen.
-- Beschriftungen stehen tangential im eigenen Ringsegment und nur, wenn die Bogenlänge reicht.
-  Alles Engere wird über den Hover gelesen statt über einen Text, der andere Ringe kreuzt.
+- **Beschriftungen** folgen einer Regel, die aus der Aufteilung selbst folgt. Die Bogenlänge eines
+  Knotens ist durch die Zahl seiner Geschwister festgelegt — tangentiale Schrift kann dort nicht
+  mehr Platz bekommen und würde auf einem dichten Ring zu „Balti…" zusammenschrumpfen. Zwei
+  Beobachtungen lösen das:
+  - **Einem Blatt gehört der Raum außerhalb.** Die Aufteilung gibt jedem Knoten ein Stück vom
+    Winkel seines Auftraggebers, also sitzt im Kegel eines Blattes weiter außen niemand mehr. Sein
+    Name läuft deshalb **radial nach außen** und in voller Länge, egal wie schmal der Bogen ist.
+  - **Ein innerer Knoten ist per Konstruktion breit**, mindestens so breit wie alle seine
+    Unterauftragnehmer zusammen. Dort passt tangentiale Schrift im eigenen Ringsegment.
+
   Die Schriftgröße wird beim Zoomen **gegenläufig skaliert**: Der Text behält seine Größe auf dem
   Bildschirm und wird in Diagrammkoordinaten schmaler, sodass Hineinzoomen zusätzliche
-  Beschriftungen freilegt, statt nur die vorhandenen zu vergrößern. `labelCapacity` in
-  `radialLayout.ts` hält diese Regel als reine, getestete Funktion fest.
+  Beschriftungen freilegt, statt nur die vorhandenen zu vergrößern. `labelPlacement` in
+  `radialLayout.ts` hält beide Regeln als reine, getestete Funktion fest.
+- Zwischen Geschwistern bleibt eine **konstante Lücke in Pixeln** — der Winkel dafür wird aus dem
+  Radius errechnet, sonst klaffte sie außen weit und wäre innen unsichtbar.
+- Die **Ringtönung** vertieft sich nach außen, sodass die Ebene eines Dienstleisters auch ohne
+  Beschriftung ablesbar ist. Befundfarben liegen darüber und gewinnen.
 - Ein Dienstleister mit mehreren Auftraggebern bekommt eine Sehne durch die Mitte. Die sind
   standardmäßig ausgeblendet — bei hundert Knoten begraben sie sonst das Zentrum.
 

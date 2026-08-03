@@ -709,6 +709,27 @@ button:focus-visible {
   cursor: pointer;
 }
 
+/* Each ring a step further from the base colour, so the depth of a provider is
+   readable from the tint alone. Severity and kind come afterwards and win. */
+.radial__node--ring-1 {
+  fill: color-mix(in oklab, var(--info) 100%, var(--fg) 0%);
+}
+.radial__node--ring-2 {
+  fill: color-mix(in oklab, var(--info) 82%, var(--fg) 18%);
+}
+.radial__node--ring-3 {
+  fill: color-mix(in oklab, var(--info) 66%, var(--fg) 34%);
+}
+.radial__node--ring-4 {
+  fill: color-mix(in oklab, var(--info) 52%, var(--fg) 48%);
+}
+.radial__node--ring-5 {
+  fill: color-mix(in oklab, var(--info) 40%, var(--fg) 60%);
+}
+.radial__node--ring-6 {
+  fill: color-mix(in oklab, var(--info) 30%, var(--fg) 70%);
+}
+
 .radial__node--financial_entity {
   fill: var(--fg);
 }
@@ -725,6 +746,7 @@ button:focus-visible {
   fill: var(--warning);
 }
 
+
 .radial__node:focus-visible {
   outline: none;
   stroke: var(--fg);
@@ -735,8 +757,23 @@ button:focus-visible {
    rule would win over that presentation attribute and defeat the counter-scaling. */
 .radial__label,
 .radial__centre-label {
-  fill: var(--muted);
   pointer-events: none;
+}
+
+/* A tangential label lies on the coloured arc of its own node, so it takes the
+   page background as its colour. A leaf label lies outside the diagram, on the
+   page itself, and takes the foreground. The two rules must stay next to each
+   other and in this order: they have equal specificity, so the modifier only
+   wins by coming last. */
+.radial__label {
+  fill: var(--bg);
+  font-weight: 500;
+}
+
+.radial__label--leaf {
+  fill: var(--fg);
+  font-weight: 400;
+  opacity: 0.78;
 }
 
 .radial__centre-label {

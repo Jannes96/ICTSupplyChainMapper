@@ -4,10 +4,13 @@ import type { Rank } from '../../domain/graph/computeRanks.ts';
 import type { LayoutGraph, LayoutNode } from '../graph/layoutModel.ts';
 import type { RadialNode } from '../graph/radialLayout.ts';
 import {
-  annularSector,
   chordPath,
-  labelCapacity,
+  labelPlacement,
   LABEL_CHARACTER_WIDTH,
+  LABEL_FONT_SIZE,
+  LEAF_LABEL_OFFSET,
+  LEAF_LABEL_OVERHANG,
+  nodeArcPath,
   polar,
   radialLayout,
   ribbonPath,
@@ -19,8 +22,8 @@ interface RadialSankeyProps {
   readonly layout: LayoutGraph;
 }
 
-const LABEL_FONT_SIZE = 11;
-const PADDING = 40;
+/** Room around the diagram for the leaf labels reaching outwards. */
+const PADDING = LEAF_LABEL_OVERHANG + 12;
 
 const MIN_ZOOM = 0.6;
 const MAX_ZOOM = 12;
@@ -291,6 +294,7 @@ export function RadialSankey({ layout }: RadialSankeyProps) {
                     node={node}
                     label={data.label}
                     scale={view.scale}
+                    diagramRadius={geometry.radius}
                   />
                 );
               })}
@@ -354,6 +358,8 @@ function NodeArc({ node, data, isLit, isMatch, onHover }: NodeArcProps) {
   const className = [
     'radial__node',
     `radial__node--${data?.kind ?? 'provider'}`,
+    // The ring tints the arc, so the layering is legible without reading a label.
+    `radial__node--ring-${Math.min(node.ring, 6)}`,
     data?.severity ? `radial__node--${data.severity}` : '',
     isLit ? 'is-lit' : '',
     isMatch ? 'is-match' : '',
@@ -385,39 +391,60 @@ function NodeArc({ node, data, isLit, isMatch, onHover }: NodeArcProps) {
   }
 
   return (
-    <path
-      {...shared}
-      d={annularSector(node.innerRadius, node.outerRadius, node.startAngle, node.endAngle)}
-    >
+    <path {...shared} d={nodeArcPath(node)}>
       {title}
     </path>
   );
 }
 
 /**
- * A label sits tangentially inside the node's own ring segment, never radiating
- * outwards: a label on an inner ring would otherwise run straight across every
- * ring outside it. Whether it fits is decided by `labelCapacity`.
+ * Where a label goes is decided by `labelPlacement`; this only draws it.
+ *
+ * A leaf writes its name radially outwards into the wedge that belongs to it
+ * alone, which is why those names appear in full however narrow the arc. An
+ * inner node writes tangentially inside its own ring segment — never outwards,
+ * which would drag the text across every ring beyond it.
  */
 function ArcLabel({
   node,
   label,
   scale,
+  diagramRadius,
 }: {
   readonly node: RadialNode;
   readonly label: string;
   readonly scale: number;
+  readonly diagramRadius: number;
 }) {
-  const fitting = labelCapacity(node, scale);
-  if (fitting === 0) return null;
+  const { mode, capacity } = labelPlacement(node, scale, diagramRadius);
+  if (capacity === 0) return null;
+
+  const text = label.length > capacity ? `${label.slice(0, capacity - 1)}…` : label;
+  const degrees = ((((node.midAngle * 180) / Math.PI) % 360) + 360) % 360;
+  // Between 0° and 180° — the lower half, since y grows downwards — the text
+  // would stand on its head, so it is turned over and anchored at the far end.
+  const flipped = degrees > 90 && degrees < 270;
+
+  if (mode === 'radial') {
+    const [x, y] = polar(node.outerRadius + LEAF_LABEL_OFFSET, node.midAngle);
+    return (
+      <text
+        className="radial__label radial__label--leaf"
+        x={x}
+        y={y}
+        fontSize={LABEL_FONT_SIZE / scale}
+        transform={`rotate(${flipped ? degrees + 180 : degrees} ${x} ${y})`}
+        textAnchor={flipped ? 'end' : 'start'}
+        dominantBaseline="middle"
+      >
+        {text}
+      </text>
+    );
+  }
 
   const midRadius = (node.innerRadius + node.outerRadius) / 2;
   const [x, y] = polar(midRadius, node.midAngle);
-  const degrees = ((((node.midAngle * 180) / Math.PI) % 360) + 360) % 360;
-  // Tangent to the ring. Between 0° and 180° — the lower half, since y grows
-  // downwards — the tangent would put the text on its head, so it is turned over.
-  const flipped = degrees > 0 && degrees < 180;
-  const rotation = degrees + (flipped ? -90 : 90);
+  const upsideDown = degrees > 0 && degrees < 180;
 
   return (
     <text
@@ -425,11 +452,11 @@ function ArcLabel({
       x={x}
       y={y}
       fontSize={LABEL_FONT_SIZE / scale}
-      transform={`rotate(${rotation} ${x} ${y})`}
+      transform={`rotate(${degrees + (upsideDown ? -90 : 90)} ${x} ${y})`}
       textAnchor="middle"
       dominantBaseline="middle"
     >
-      {label.length > fitting ? `${label.slice(0, fitting - 1)}…` : label}
+      {text}
     </text>
   );
 }

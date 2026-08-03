@@ -39,6 +39,13 @@ export interface RadialNode {
   readonly weight: number;
   /** Client in the spanning tree; `null` only for the centre. */
   readonly parent: NodeId | null;
+  /**
+   * No subcontractors of its own. Worth knowing for the labels: the angular
+   * wedge outside a leaf belongs to nobody, because the partition hands each
+   * child a slice of its parent and a leaf has no children. That free space is
+   * what lets a leaf carry its full name.
+   */
+  readonly isLeaf: boolean;
 }
 
 export interface RadialRibbon {
@@ -139,6 +146,7 @@ export function radialLayout(graph: LayoutGraph): RadialLayout {
       midAngle: (startAngle + endAngle) / 2,
       weight: weightOf(id),
       parent: parentOf.get(id) ?? null,
+      isLeaf: (children.get(id) ?? []).length === 0,
     });
 
     const own = children.get(id) ?? [];
@@ -196,24 +204,79 @@ export function ringOuterRadius(ring: number): number {
 
 /** Rough width of one character at the label font size, in diagram units. */
 export const LABEL_CHARACTER_WIDTH = 5.9;
+/** Nominal label font size, in diagram units at zoom 1. */
+export const LABEL_FONT_SIZE = 11;
 /** Shorter than this a label says nothing and is better left to the hover. */
 export const MIN_LABEL_CHARACTERS = 6;
+/** Distance a leaf's label keeps from its arc. */
+export const LEAF_LABEL_OFFSET = 7;
+/**
+ * How far a leaf label may reach beyond the outermost ring.
+ *
+ * Leaves on inner rings have the whole free wedge outside them; a leaf on the
+ * outermost ring has only this margin, and it is what decides whether a company
+ * name arrives whole or as "Alpenblick Archive Gmb…". Room for roughly
+ * thirty-five characters, at the price of drawing the rings a little smaller.
+ */
+export const LEAF_LABEL_OVERHANG = 214;
+
+export interface LabelPlacement {
+  /** `'radial'` reads outwards along the ray, `'tangential'` along the ring. */
+  readonly mode: 'radial' | 'tangential';
+  /** Characters that fit. `0` means the label is left to the hover. */
+  readonly capacity: number;
+}
 
 /**
- * How many characters fit into a node's arc at the current zoom — `0` when the
- * arc is too short to carry a label at all.
+ * Where a node's name goes, and how much of it fits.
  *
- * The zoom is a factor rather than a constant because the label font is scaled
- * down by the same amount when the view is magnified. The text therefore keeps
- * its size on screen and grows *narrower* in diagram units, so zooming in reveals
- * labels on the crowded outer rings instead of only enlarging the few that
- * already fitted.
+ * The arc length of a node is fixed by how many siblings it has, so tangential
+ * text cannot be given more room — on a crowded ring it gets cut to "Balti…",
+ * which is worse than no label at all. Two observations get around that:
+ *
+ * - **A leaf owns the space outside it.** The partition hands each node a slice
+ *   of its parent's angle, so nothing sits further out in a leaf's wedge. Its
+ *   name can therefore run *radially* outwards at full length, no matter how
+ *   narrow the arc. The only requirement is that the wedge be tall enough for a
+ *   line of text.
+ * - **An inner node is wide by construction**, being at least as wide as all of
+ *   its subcontractors together, so tangential text fits it comfortably.
+ *
+ * `scale` is the zoom. The font is scaled down by the same factor when the view
+ * is magnified, so the text keeps its size on screen and grows narrower in
+ * diagram units — zooming in uncovers labels instead of only enlarging them.
  */
-export function labelCapacity(node: RadialNode, scale: number): number {
+export function labelPlacement(node: RadialNode, scale: number, diagramRadius: number): LabelPlacement {
+  const fontSize = LABEL_FONT_SIZE / scale;
+
+  if (node.isLeaf) {
+    // Radial text needs the wedge to be at least one line tall where it starts.
+    const wedgeHeight = (node.endAngle - node.startAngle) * node.outerRadius;
+    if (wedgeHeight < fontSize * 1.05) return { mode: 'radial', capacity: 0 };
+
+    const available =
+      diagramRadius + LEAF_LABEL_OVERHANG - node.outerRadius - LEAF_LABEL_OFFSET;
+    return { mode: 'radial', capacity: charactersIn(available, scale) };
+  }
+
   const midRadius = (node.innerRadius + node.outerRadius) / 2;
-  const arcLength = (node.endAngle - node.startAngle) * midRadius;
-  const capacity = Math.floor((arcLength * scale) / LABEL_CHARACTER_WIDTH);
+  return { mode: 'tangential', capacity: charactersIn((node.endAngle - node.startAngle) * midRadius, scale) };
+}
+
+function charactersIn(length: number, scale: number): number {
+  const capacity = Math.floor((length * scale) / LABEL_CHARACTER_WIDTH);
   return capacity < MIN_LABEL_CHARACTERS ? 0 : capacity;
+}
+
+/**
+ * Angular inset that leaves a constant gap in pixels at the given radius, so
+ * neighbouring providers read as separate blocks instead of one closed ring.
+ * Returns `0` where the slice is too narrow to spare it.
+ */
+export function angularInset(startAngle: number, endAngle: number, radius: number, gap = 1.6): number {
+  if (radius <= 0) return 0;
+  const inset = gap / radius;
+  return endAngle - startAngle > inset * 4 ? inset : 0;
 }
 
 /** Point on a circle around the origin. */
@@ -258,7 +321,24 @@ export function annularSector(
  * the number of providers behind it.
  */
 export function ribbonPath(parent: RadialNode, child: RadialNode): string {
-  return annularSector(parent.outerRadius, child.innerRadius, child.startAngle, child.endAngle);
+  const inset = angularInset(child.startAngle, child.endAngle, parent.outerRadius);
+  return annularSector(
+    parent.outerRadius,
+    child.innerRadius,
+    child.startAngle + inset,
+    child.endAngle - inset,
+  );
+}
+
+/** The arc drawn for the node itself, inset so neighbours stay distinguishable. */
+export function nodeArcPath(node: RadialNode): string {
+  const inset = angularInset(node.startAngle, node.endAngle, node.innerRadius);
+  return annularSector(
+    node.innerRadius,
+    node.outerRadius,
+    node.startAngle + inset,
+    node.endAngle - inset,
+  );
 }
 
 /** Chord through the centre region, for a provider contracted more than once. */

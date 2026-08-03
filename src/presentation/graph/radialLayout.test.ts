@@ -4,8 +4,9 @@ import { validateRegister } from '../../domain/validation/validateRegister.ts';
 import { link, makeRegister, TEST_FINANCIAL_ENTITY } from '../../testing/registerBuilder.ts';
 import { toLayoutGraph } from './layoutModel.ts';
 import {
+  angularInset,
   annularSector,
-  labelCapacity,
+  labelPlacement,
   MIN_LABEL_CHARACTERS,
   radialLayout,
 } from './radialLayout.ts';
@@ -159,38 +160,80 @@ describe('radialLayout', () => {
   });
 });
 
-describe('labelCapacity', () => {
-  const wide = layoutOf([link('C1', 'A', null, 1)]).nodes.find((node) => node.ring === 1);
+describe('labelPlacement', () => {
+  /** A chain of `count` direct providers, each of which subcontracts once. */
+  function crowdedLayout(count: number) {
+    return layoutOf(
+      Array.from({ length: count }, (_, index) => [
+        link('C1', `P${index}`, null, 1),
+        link('C1', `S${index}`, `P${index}`, 2),
+      ]).flat(),
+    );
+  }
 
-  it('fits more characters the wider the arc', () => {
-    const narrow = layoutOf(
-      Array.from({ length: 40 }, (_, index) => link('C1', `P${index}`, null, 1)),
-    ).nodes.find((node) => node.ring === 1);
+  it('writes an inner node along its ring', () => {
+    const layout = crowdedLayout(3);
+    const inner = layout.nodes.find((node) => node.ring === 1);
 
-    expect(labelCapacity(wide as never, 1)).toBeGreaterThan(labelCapacity(narrow as never, 1));
+    expect(inner?.isLeaf).toBe(false);
+    expect(labelPlacement(inner as never, 1, layout.radius).mode).toBe('tangential');
   });
 
-  it('refuses an arc too short to say anything', () => {
-    const crowded = layoutOf(
-      Array.from({ length: 120 }, (_, index) => link('C1', `P${index}`, null, 1)),
-    ).nodes.find((node) => node.ring === 1);
+  it('writes a leaf outwards, where the wedge belongs to nobody else', () => {
+    const layout = crowdedLayout(3);
+    const leaf = layout.nodes.find((node) => node.isLeaf);
 
-    expect(labelCapacity(crowded as never, 1)).toBe(0);
+    expect(labelPlacement(leaf as never, 1, layout.radius).mode).toBe('radial');
+  });
+
+  it('gives a leaf room for a full company name even on a crowded ring', () => {
+    // The whole point: a leaf's arc may be a sliver, but the space outside it is
+    // free, so the name does not have to be cut down to "Balti…".
+    const layout = crowdedLayout(40);
+    const leaf = layout.nodes.find((node) => node.isLeaf);
+
+    expect(labelPlacement(leaf as never, 1, layout.radius).capacity).toBeGreaterThan(
+      'Alpenblick Archive GmbH & Co. KG'.length,
+    );
+  });
+
+  it('drops a leaf label when the wedge is not even one line tall', () => {
+    const layout = crowdedLayout(400);
+    const leaf = layout.nodes.find((node) => node.isLeaf);
+
+    expect(labelPlacement(leaf as never, 1, layout.radius).capacity).toBe(0);
+  });
+
+  it('cuts an inner label the more siblings compete for the ring', () => {
+    const roomy = crowdedLayout(3);
+    const tight = crowdedLayout(40);
+
+    expect(labelPlacement(roomy.nodes.find((n) => n.ring === 1) as never, 1, roomy.radius).capacity)
+      .toBeGreaterThan(
+        labelPlacement(tight.nodes.find((n) => n.ring === 1) as never, 1, tight.radius).capacity,
+      );
   });
 
   it('reveals a label once the view is magnified far enough', () => {
     // The point of counter-scaling the font: zooming in has to uncover labels,
     // not merely enlarge the ones that already fitted.
-    const crowded = layoutOf(
-      Array.from({ length: 120 }, (_, index) => link('C1', `P${index}`, null, 1)),
-    ).nodes.find((node) => node.ring === 1);
+    const layout = crowdedLayout(60);
+    const inner = layout.nodes.find((node) => node.ring === 1);
 
-    expect(labelCapacity(crowded as never, 1)).toBe(0);
-    expect(labelCapacity(crowded as never, 8)).toBeGreaterThanOrEqual(MIN_LABEL_CHARACTERS);
+    expect(labelPlacement(inner as never, 1, layout.radius).capacity).toBe(0);
+    expect(labelPlacement(inner as never, 8, layout.radius).capacity).toBeGreaterThanOrEqual(
+      MIN_LABEL_CHARACTERS,
+    );
+  });
+});
+
+describe('angularInset', () => {
+  it('turns a pixel gap into an angle that shrinks with the radius', () => {
+    expect(angularInset(0, 1, 100)).toBeGreaterThan(angularInset(0, 1, 400));
   });
 
-  it('scales the capacity with the zoom', () => {
-    expect(labelCapacity(wide as never, 2)).toBeCloseTo(labelCapacity(wide as never, 1) * 2, -1);
+  it('spares no gap where the slice is too narrow for one', () => {
+    expect(angularInset(0, 0.001, 100)).toBe(0);
   });
 });
 
