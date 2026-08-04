@@ -1,7 +1,11 @@
 # ICT Supply Chain Mapper
 
+[![Check and deploy](https://github.com/Jannes96/ICTSupplyChainMapper/actions/workflows/deploy.yml/badge.svg)](https://github.com/Jannes96/ICTSupplyChainMapper/actions/workflows/deploy.yml)
+
 Prüfwerkzeug für IKT-Weiterverlagerungsketten im Informationsregister nach **DORA Art. 28 Abs. 3**
 (Meldevorlagen **B_05.01** und **B_05.02**).
+
+**→ [Anwendung ansehen](https://jannes96.github.io/ICTSupplyChainMapper/)**
 
 > Portfolio-Projekt. Es verarbeitet ausschließlich synthetische Daten — keine echten Unternehmens-,
 > Vertrags- oder Registerdaten. Die Oberfläche ist deutsch, Code und Bezeichner sind englisch.
@@ -281,8 +285,22 @@ npm run dev
 | `npm run typecheck` | TypeScript ohne Emit |
 | `npm run build` | Produktionsbuild nach `dist/` |
 
-Die Anwendung ist reines Frontend ohne Backend und damit über GitHub Pages veröffentlichbar. Der
-Asset-Pfad (`base`) in `vite.config.ts` muss dem Repository-Namen entsprechen.
+## Veröffentlichung
+
+Die Anwendung ist reines Frontend ohne Backend. `.github/workflows/deploy.yml` prüft bei jedem Push
+auf `main` Typen, Tests und Build und veröffentlicht das Ergebnis auf GitHub Pages. Die Seite kann
+also nur aus einem Stand live gehen, dessen Tests grün waren; Pull Requests werden geprüft, aber
+nicht veröffentlicht.
+
+Zwei Dinge müssen dafür zusammenpassen:
+
+- Der Asset-Pfad (`base`) in `vite.config.ts` entspricht dem Repository-Namen — sonst sucht die
+  veröffentlichte Seite ihre Dateien eine Ebene zu hoch und bleibt weiß.
+- In den Repository-Einstellungen unter *Pages* muss als Quelle **GitHub Actions** gewählt sein,
+  nicht ein Branch.
+
+Eine 404-Weiterleitung braucht es nicht: Die Adresse des Kettenfensters steckt im Hash
+(`#kette?…`), den der Server nie zu sehen bekommt.
 
 ## Stand
 
