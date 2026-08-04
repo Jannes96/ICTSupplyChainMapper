@@ -142,6 +142,43 @@ describe('editorReducer', () => {
     });
   });
 
+  describe('import', () => {
+    it('replaces only the master data, leaving the chains alone', () => {
+      // The two templates arrive as separate files. Replacing everything would
+      // mean the second file wipes out what the first one brought.
+      const next = editorReducer(base, {
+        type: 'providers/replace',
+        providers: [provider('X'), provider('Y')],
+      });
+
+      expect(next.providers.map((item) => item.id)).toEqual([n('X'), n('Y')]);
+      expect(next.links).toEqual(base.links);
+    });
+
+    it('replaces only the chains, leaving the master data alone', () => {
+      const next = editorReducer(base, { type: 'links/replace', links: [link('C7', 'A', null, 1)] });
+
+      expect(next.links).toEqual([link('C7', 'A', null, 1)]);
+      expect(next.providers).toEqual(base.providers);
+    });
+
+    it('reads the contract list back from the imported chains', () => {
+      const next = editorReducer(base, {
+        type: 'links/replace',
+        links: [link('C7', 'A', null, 1), link('C8', 'B', null, 1), link('C7', 'B', 'A', 2)],
+      });
+
+      expect(next.contractRefs).toEqual([c('C7'), c('C8')]);
+    });
+
+    it('drops a hand-made empty contract, which the file does not know about', () => {
+      const withEmpty = editorReducer(base, { type: 'contract/add', ref: c('C-leer') });
+      const next = editorReducer(withEmpty, { type: 'links/replace', links: [link('C7', 'A', null, 1)] });
+
+      expect(next.contractRefs).toEqual([c('C7')]);
+    });
+  });
+
   it('round-trips through a register', () => {
     expect(fromRegister(toRegister(base))).toEqual(base);
   });

@@ -22,6 +22,23 @@ export const PROVIDER_COLUMNS = ['provider_id', 'code_type', 'legal_name', 'coun
 export const SUPPLY_CHAIN_COLUMNS = ['contract_ref', 'provider_id', 'reported_rank', 'contracted_by'] as const;
 
 /**
+ * Which template a file holds, read from its header row.
+ *
+ * Letting the file say what it is beats asking the user to assign it: a
+ * misassignment then cannot happen, and both files can be picked at once in any
+ * order. Only the columns unique to one template are consulted — `provider_id`
+ * appears in both and says nothing.
+ */
+export function detectTemplate(text: string, delimiter?: Delimiter): TemplateId | null {
+  const header = parseCsv(text, delimiter)[0] ?? [];
+  const columns = new Set(header.map((name) => name.trim().toLowerCase()));
+
+  if (columns.has('contract_ref')) return TEMPLATES.supplyChain;
+  if (columns.has('person_type') || columns.has('legal_name')) return TEMPLATES.providers;
+  return null;
+}
+
+/**
  * Import problems are technical, not regulatory: a malformed file is not a
  * finding about the register. They are reported separately so the finding list
  * stays exactly the list of content defects.

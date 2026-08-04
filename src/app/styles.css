@@ -577,6 +577,46 @@ button:focus-visible {
   color: var(--error);
 }
 
+.import-report {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.import-report__item {
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+}
+
+.import-report__item--accepted {
+  border-left-color: var(--info);
+}
+.import-report__item--partial {
+  border-left-color: var(--warning);
+}
+.import-report__item--rejected {
+  border-left-color: var(--error);
+}
+
+.import-report__item p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+
+/* Import problems are about the file, never about the register — they stay
+   visually apart from the findings, which are about its content. */
+.import-report__issues {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.75rem;

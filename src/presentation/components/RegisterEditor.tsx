@@ -7,6 +7,7 @@ import { nodeId } from '../../domain/model/ids.ts';
 import { downloadText } from '../download.ts';
 import { ContractSection } from './ContractSection.tsx';
 import { ProviderSection } from './ProviderSection.tsx';
+import { RegisterImport } from './RegisterImport.tsx';
 
 interface RegisterEditorProps {
   readonly state: EditorState;
@@ -95,11 +96,16 @@ export function RegisterEditor({
       />
 
       <section className="editor-block">
+        <h3>Register laden</h3>
+        <RegisterImport state={state} dispatch={dispatch} />
+      </section>
+
+      <section className="editor-block">
         <h3>Register sichern</h3>
         <p className="note">
           Das Register liegt im Browser dieses Rechners und wird beim nächsten Öffnen
           wiederhergestellt. Es verlässt das Gerät nicht. Der CSV-Export liefert beide Meldevorlagen
-          im Format, das auch der Import liest.
+          in genau dem Format, das der Import oben wieder liest.
         </p>
         <div className="inline-form">
           <button

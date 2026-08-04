@@ -3,6 +3,7 @@ import { nodeId } from '../../domain/model/ids.ts';
 import { validateRegister } from '../../domain/validation/validateRegister.ts';
 import { TEST_FINANCIAL_ENTITY } from '../../testing/registerBuilder.ts';
 import {
+  detectTemplate,
   exportProvidersCsv,
   exportSupplyChainCsv,
   importRegister,
@@ -106,6 +107,27 @@ describe('parseSupplyChainCsv', () => {
 
     expect(rows.every((row) => row.reportedRank === null)).toBe(true);
     expect(issues.map((issue) => issue.value)).toEqual(['0', 'zwei']);
+  });
+});
+
+describe('detectTemplate', () => {
+  it('recognises both templates from their header row', () => {
+    expect(detectTemplate(PROVIDERS_CSV)).toBe('B_05.01');
+    expect(detectTemplate(SUPPLY_CHAIN_CSV)).toBe('B_05.02');
+  });
+
+  it('does not go by provider_id, which both templates carry', () => {
+    expect(detectTemplate('provider_id\nTEST0001')).toBeNull();
+  });
+
+  it('recognises a file whose columns are reordered or semicolon-separated', () => {
+    expect(detectTemplate('country;provider_id;person_type;legal_name;code_type')).toBe('B_05.01');
+    expect(detectTemplate('provider_id;reported_rank;contract_ref;contracted_by')).toBe('B_05.02');
+  });
+
+  it('rejects a file that is neither', () => {
+    expect(detectTemplate('name,betrag\nMiete,1200')).toBeNull();
+    expect(detectTemplate('')).toBeNull();
   });
 });
 

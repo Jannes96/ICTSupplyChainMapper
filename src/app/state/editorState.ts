@@ -35,6 +35,10 @@ export type EditorAction =
   /** Edits an existing relationship in place — including who contracts whom. */
   | { type: 'link/replace'; previous: SupplyChainLink; next: SupplyChainLink }
   | { type: 'link/remove'; link: SupplyChainLink }
+  /** Takes the master data from an imported B_05.01, replacing what was there. */
+  | { type: 'providers/replace'; providers: readonly Provider[] }
+  /** Takes the chains from an imported B_05.02, replacing what was there. */
+  | { type: 'links/replace'; links: readonly SupplyChainLink[] }
   | { type: 'state/replace'; state: EditorState };
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
@@ -133,6 +137,22 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         links: state.links.filter((link) => !isSameRelationship(link, action.link)),
       };
 
+    // The two imports replace one template each rather than the whole register.
+    // A file has to be able to arrive on its own — replacing everything would
+    // mean the second of the two files wipes out the first.
+    case 'providers/replace':
+      return { ...state, providers: action.providers };
+
+    case 'links/replace':
+      return {
+        ...state,
+        links: action.links,
+        // The file is the truth about the chains, so the contract list is read
+        // back from it. A contract created by hand and left empty is not in the
+        // file and therefore does not survive the import.
+        contractRefs: distinctContractRefs(action.links),
+      };
+
     case 'state/replace':
       return action.state;
   }
@@ -159,16 +179,21 @@ export function toRegister(state: EditorState): Register {
 }
 
 export function fromRegister(register: Register): EditorState {
-  const contractRefs: ContractRef[] = [];
-  for (const link of register.links) {
-    if (!contractRefs.includes(link.contractRef)) contractRefs.push(link.contractRef);
-  }
   return {
     financialEntity: register.financialEntity,
     providers: register.providers,
     links: register.links,
-    contractRefs,
+    contractRefs: distinctContractRefs(register.links),
   };
+}
+
+/** Contract references in the order they first occur. */
+function distinctContractRefs(links: readonly SupplyChainLink[]): ContractRef[] {
+  const refs: ContractRef[] = [];
+  for (const link of links) {
+    if (!refs.includes(link.contractRef)) refs.push(link.contractRef);
+  }
+  return refs;
 }
 
 /**

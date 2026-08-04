@@ -161,6 +161,27 @@ Semikolon werden erkannt (deutsche Excel-Exporte), ein UTF-8-BOM wird entfernt.
 höher. Das Finanzunternehmen selbst steht in keiner der beiden Dateien — es ist die meldende
 Institution und wird der Anwendung getrennt übergeben.
 
+### Import
+
+Beide Dateien lassen sich zusammen oder einzeln wählen; **welche Vorlage eine Datei enthält, wird an
+ihrer Kopfzeile erkannt** (`contract_ref` → B_05.02, `person_type` → B_05.01). Damit entfällt eine
+Zuordnung, die der Nutzer falsch treffen könnte, und die Reihenfolge spielt keine Rolle.
+
+Jede Datei ersetzt **ihre eigene Vorlage**, nicht das ganze Register — sonst würde die zweite der
+beiden Dateien auslöschen, was die erste gebracht hat. Ein neuer Upload tritt damit an die Stelle
+des vorherigen Registers. Ist etwas zu verlieren, wird vorher gefragt, mit Zahlen.
+
+Wird nur B_05.01 ersetzt und die alte Kette bleibt stehen, verweist sie auf Dienstleister ohne
+Stammdaten — das erzeugt eine Reihe von `UNKNOWN_PROVIDER_REFERENCE`. Das ist beabsichtigt: Der
+Zustand ist falsch und soll sichtbar falsch sein, statt still repariert zu werden.
+
+**Dateiprobleme und Befunde bleiben getrennt.** Eine fehlende Pflichtspalte ist kein Meldefehler,
+sondern eine kaputte Datei; die Meldungen dazu stehen beim Import und nicht in der Befundliste.
+
+Das Finanzunternehmen bleibt beim Import unverändert, weil es in keiner der beiden Vorlagen steht.
+Ab der Übernahme in den Editor gibt es **keinen eigenen Codepfad für importierte Daten** — ein
+eingelesenes Register durchläuft exakt dieselbe Prüfung wie ein getipptes.
+
 Die ITS-Spaltencodes (`b_05.01.0010` …) werden bewusst nicht als Spaltenköpfe verwendet: Sie sind
 ohne Legende nicht lesbar. Eine Alias-Tabelle in `src/data/csv/registerCsv.ts` könnte sie beim Import
 zusätzlich akzeptieren, ohne die Domäne zu berühren.
@@ -320,10 +341,13 @@ Dieser Schritt liefert das tragende Gerüst, noch keine fertige Anwendung.
 - radiales Sankey-Diagramm in einem eigenen Fenster, für Ketten mit hundert Dienstleistern, mit
   Pfadverfolgung und Suche
 
+- CSV-Import in der Oberfläche: Vorlage wird an der Kopfzeile erkannt, Dateiprobleme werden
+  getrennt von den fachlichen Befunden ausgewiesen
+
 **Offen**
 
-- CSV-Dateiauswahl in der Oberfläche (der Import selbst funktioniert bereits)
 - Export eines korrigierten Registers mit berechneten statt gemeldeten Rängen
+- Registerbibliothek: mehrere Register nebeneinander halten und vergleichen
 
 **Nicht Teil des Projekts:** die übrigen Meldevorlagen, xBRL-CSV, aufsichtliche Meldeformate.
 
