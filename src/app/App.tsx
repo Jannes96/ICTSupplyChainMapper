@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { DEMO_FINANCIAL_ENTITY } from '../data/generator/generateRegister.ts';
 import {
   clearEditorState,
@@ -7,9 +7,10 @@ import {
 } from '../data/storage/registerStorage.ts';
 import { validateRegister } from '../domain/validation/validateRegister.ts';
 import { ContractRankTable } from '../presentation/components/ContractRankTable.tsx';
-import { FindingList } from '../presentation/components/FindingList.tsx';
+import { FindingList, type LocatedFinding } from '../presentation/components/FindingList.tsx';
 import { RegisterEditor } from '../presentation/components/RegisterEditor.tsx';
 import { SupplyChainDiagram } from '../presentation/components/SupplyChainDiagram.tsx';
+import { locateFinding } from '../presentation/findingFocus.ts';
 import { toLayoutGraph } from '../presentation/graph/layoutModel.ts';
 import { buildChainWindowHash, type ChainWindowParams } from './ChainWindow.tsx';
 import { buildDemoRegister } from './demoRegister.ts';
@@ -47,6 +48,9 @@ export function App() {
   const [mode, setMode] = useState<Mode>('demo');
   const [withFaults, setWithFaults] = useState(true);
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  /** Index of the finding whose nodes are marked in the diagram. */
+  const [selectedFinding, setSelectedFinding] = useState<number | null>(null);
+  const diagramRef = useRef<HTMLElement>(null);
 
   // A stored register is read once, before the first render of the editor.
   const [editorState, dispatch] = useReducer(
@@ -72,6 +76,41 @@ export function App() {
     ? report.findings.filter((finding) => finding.contractRef === contract.ref)
     : [];
 
+  const located: LocatedFinding[] = useMemo(
+    () => report.findings.map((finding) => ({ finding, focus: locateFinding(report, finding) })),
+    [report],
+  );
+
+  // Only mark nodes while the diagram actually shows the finding's contract —
+  // otherwise a stale selection would light up whatever node happens to share
+  // an identifier in another chain.
+  const selectedFocus = selectedFinding === null ? null : located[selectedFinding]?.focus ?? null;
+  const focusedNodes =
+    selectedFocus && contract && selectedFocus.contractRef === contract.ref
+      ? new Set(selectedFocus.nodeIds)
+      : null;
+
+  const showFinding = (index: number): void => {
+    if (index === selectedFinding) {
+      setSelectedFinding(null);
+      return;
+    }
+    const focus = located[index]?.focus;
+    if (!focus) return;
+
+    setSelectedFinding(index);
+    setSelectedRef(focus.contractRef);
+    // The findings sit below the diagram, so the diagram has to be brought back
+    // into view — otherwise the marking happens off screen.
+    diagramRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const switchRegister = (next: Mode): void => {
+    setMode(next);
+    setSelectedRef(null);
+    setSelectedFinding(null);
+  };
+
   return (
     <main className="app">
       <header>
@@ -92,8 +131,7 @@ export function App() {
           type="button"
           className={mode === 'demo' ? 'tab tab--active' : 'tab'}
           onClick={() => {
-            setMode('demo');
-            setSelectedRef(null);
+            switchRegister('demo');
           }}
         >
           Beispielregister
@@ -102,8 +140,7 @@ export function App() {
           type="button"
           className={mode === 'own' ? 'tab tab--active' : 'tab'}
           onClick={() => {
-            setMode('own');
-            setSelectedRef(null);
+            switchRegister('own');
           }}
         >
           Eigenes Register
@@ -116,7 +153,10 @@ export function App() {
             <input
               type="checkbox"
               checked={withFaults}
-              onChange={(event) => setWithFaults(event.target.checked)}
+              onChange={(event) => {
+                setWithFaults(event.target.checked);
+                setSelectedFinding(null);
+              }}
             />
             Beispielregister mit eingebauten Fehlern
           </label>
@@ -164,7 +204,7 @@ export function App() {
       </section>
 
       {contract && layout ? (
-        <section>
+        <section ref={diagramRef}>
           <div className="section-head">
             <h2>Lieferkette</h2>
             <div className="section-head__tools">
@@ -203,7 +243,7 @@ export function App() {
             einen Fehlerbefund.
           </p>
 
-          <SupplyChainDiagram layout={layout} />
+          <SupplyChainDiagram layout={layout} focused={focusedNodes} />
 
           <ul className="legend">
             <li>
@@ -224,7 +264,7 @@ export function App() {
             <summary>
               Ränge als Tabelle — {contractFindings.length} Befunde in diesem Vertrag
             </summary>
-            <ContractRankTable layout={layout} />
+            <ContractRankTable layout={layout} focused={focusedNodes} />
           </details>
         </section>
       ) : (
@@ -239,7 +279,7 @@ export function App() {
 
       <section>
         <h2>Befunde</h2>
-        <FindingList findings={report.findings} />
+        <FindingList items={located} selected={selectedFinding} onSelect={showFinding} />
       </section>
     </main>
   );

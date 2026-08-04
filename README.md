@@ -14,7 +14,7 @@ Prüfwerkzeug für IKT-Weiterverlagerungsketten im Informationsregister nach **D
 
 ## Problemstellung
 
-Finanzunternehmen müssen jeden IKT-Drittdienstleister im Informationsregister erfassen — und mit ihm
+Finanzunternehmen müssen jeden IKT-Drittdienstleister im Informationsregister erfassen und mit ihm
 die gesamte Kette der Weiterverlagerungen. B_05.02 verlangt dafür je Vertrag einen **Rang**:
 
 | Rang | Bedeutung |
@@ -343,6 +343,8 @@ Dieser Schritt liefert das tragende Gerüst, noch keine fertige Anwendung.
 
 - CSV-Import in der Oberfläche: Vorlage wird an der Kopfzeile erkannt, Dateiprobleme werden
   getrennt von den fachlichen Befunden ausgewiesen
+- Befund anklicken führt zum Ort: Das Diagramm wechselt auf den betroffenen Vertrag, markiert die
+  Knoten, zentriert den Ausschnitt auf sie und blendet den Rest ab
 
 **Offen**
 

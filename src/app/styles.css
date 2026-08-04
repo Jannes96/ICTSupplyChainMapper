@@ -109,6 +109,41 @@ h3 {
   color: var(--muted);
 }
 
+/* A locatable finding is a button filling its whole card, so the entire entry
+   is the click target rather than a small link inside it. */
+.finding--locatable {
+  padding: 0;
+}
+
+.finding__button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+}
+
+.finding__hint {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--info);
+}
+
+.finding--locatable:hover {
+  border-color: var(--info);
+}
+
+.finding--selected {
+  border-color: var(--info);
+  background: color-mix(in oklab, var(--info) 10%, transparent);
+}
+
 .badge,
 .contract,
 .country {
@@ -324,6 +359,27 @@ code,
 
 .chain-edge--error .react-flow__edge-path {
   stroke: var(--error);
+}
+
+/* While a finding is selected, everything it does not concern steps back. */
+.diagram--focused .chain-node:not(.chain-node--focused),
+.diagram--focused .chain-edge:not(.chain-edge--focused) {
+  opacity: 0.3;
+}
+
+.chain-node--focused {
+  border-color: var(--info);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--info) 45%, transparent);
+}
+
+.chain-edge--focused .react-flow__edge-path {
+  stroke: var(--info);
+  stroke-width: 2.5;
+}
+
+.node--focused {
+  border-color: var(--info);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--info) 40%, transparent);
 }
 
 .legend {

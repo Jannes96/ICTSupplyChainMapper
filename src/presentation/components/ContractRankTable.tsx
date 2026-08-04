@@ -1,8 +1,11 @@
+import type { NodeId } from '../../domain/model/ids.ts';
 import type { LayoutGraph } from '../graph/layoutModel.ts';
 import { formatRank } from '../i18n/de.ts';
 
 interface ContractRankTableProps {
   readonly layout: LayoutGraph;
+  /** Same marking as in the diagram — the table is its text alternative. */
+  readonly focused?: ReadonlySet<NodeId> | null;
 }
 
 /**
@@ -10,7 +13,7 @@ interface ContractRankTableProps {
  * is rendered here as a table, grouped by rank. It already answers the question
  * the visualisation will answer — who sits at which level of the chain.
  */
-export function ContractRankTable({ layout }: ContractRankTableProps) {
+export function ContractRankTable({ layout, focused = null }: ContractRankTableProps) {
   const labels = new Map(layout.nodes.map((node) => [node.id, node]));
 
   return (
@@ -29,8 +32,16 @@ export function ContractRankTable({ layout }: ContractRankTableProps) {
               <ul className="layer">
                 {layer.nodes.map((id) => {
                   const node = labels.get(id);
+                  const classes = [
+                    'node',
+                    node?.findingCodes.length ? 'node--flagged' : '',
+                    focused?.has(id) ? 'node--focused' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
                   return (
-                    <li key={id} className={node?.findingCodes.length ? 'node node--flagged' : 'node'}>
+                    <li key={id} className={classes}>
                       {node?.label ?? id}
                       {node?.country ? <span className="country">{node.country}</span> : null}
                     </li>

@@ -11,6 +11,8 @@ export type ChainNodeData = {
   country: string | null;
   findingCodes: readonly Finding['code'][];
   severity: Severity | null;
+  /** Marked because a finding in the list points here. */
+  isFocused: boolean;
 };
 
 export type ChainNodeType = Node<ChainNodeData, 'chain'>;
@@ -23,6 +25,7 @@ export type ChainNodeType = Node<ChainNodeData, 'chain'>;
 export function ChainNode({ data }: NodeProps<ChainNodeType>) {
   const classes = ['chain-node', `chain-node--${data.kind}`];
   if (data.severity) classes.push(`chain-node--${data.severity}`);
+  if (data.isFocused) classes.push('chain-node--focused');
 
   return (
     <div className={classes.join(' ')}>
