@@ -1,0 +1,79 @@
+<!doctype html>
+<!--
+  Quelle der Vorschaukarte `public/vorschau.png` — des Bildes, das erscheint,
+  wenn der Link in eine Nachricht oder Bewerbung gesetzt wird.
+
+  Die Karte liegt als HTML im Repository, damit sie reproduzierbar bleibt und
+  nicht als undurchsichtige Binärdatei dasteht. Neu erzeugen mit:
+
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    --headless --disable-gpu --hide-scrollbars --window-size=1200,630 \
+    --screenshot=public/vorschau.png tools/vorschau.html
+
+  1200 × 630 ist das von Open Graph empfohlene Format.
+-->
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #14161a;
+        color: #e8eaed;
+        font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+      }
+      .text { padding: 0 0 0 80px; flex: 1 1 auto; }
+      .kicker {
+        color: #86b4e8;
+        font-size: 25px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 26px;
+      }
+      h1 {
+        font-size: 66px;
+        line-height: 1.08;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 30px;
+      }
+      p {
+        color: #9aa1ad;
+        font-size: 29px;
+        line-height: 1.45;
+        max-width: 17em;
+      }
+      strong { color: #e8eaed; font-weight: 600; }
+      .mark { flex: 0 0 470px; display: flex; justify-content: center; }
+    </style>
+  </head>
+  <body>
+    <div class="text">
+      <div class="kicker">DORA Art. 28 Abs. 3 · B_05.01 / B_05.02</div>
+      <h1>IKT-Lieferketten-<br />Mapper</h1>
+      <p>
+        Der Rang wird aus dem Graphen <strong>berechnet</strong>, nicht gepflegt — Abweichungen zur
+        Meldung werden als Befund ausgewiesen.
+      </p>
+    </div>
+
+    <div class="mark">
+      <!-- Dasselbe Motiv wie im Favicon, nur groß: Finanzunternehmen im Zentrum,
+           Ränge als Ringe, mit der Lücke einer früh endenden Kette. -->
+      <svg width="420" height="420" viewBox="0 0 420 420">
+        <g fill="none" transform="rotate(-90 210 210)">
+          <circle cx="210" cy="210" r="46" fill="#e8eaed" />
+          <circle cx="210" cy="210" r="96" stroke="#86b4e8" stroke-width="26" stroke-dasharray="500 103" />
+          <circle cx="210" cy="210" r="148" stroke="#6f9ed2" stroke-width="26" stroke-dasharray="750 180" />
+          <circle cx="210" cy="210" r="200" stroke="#4d7cb0" stroke-width="26" stroke-dasharray="880 377" />
+        </g>
+      </svg>
+    </div>
+  </body>
+</html>
