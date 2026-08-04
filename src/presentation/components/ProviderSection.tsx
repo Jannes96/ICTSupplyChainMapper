@@ -134,6 +134,7 @@ export function ProviderSection({ state, dispatch }: ProviderSectionProps) {
       {state.providers.length === 0 ? (
         <p className="empty">Noch kein Dienstleister erfasst.</p>
       ) : (
+        <div className="grid-scroll">
         <table className="grid">
           <thead>
             <tr>
@@ -188,6 +189,7 @@ export function ProviderSection({ state, dispatch }: ProviderSectionProps) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </section>
   );

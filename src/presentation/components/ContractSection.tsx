@@ -255,6 +255,7 @@ export function ContractSection({
           {links.length === 0 ? (
             <p className="empty">In diesem Vertrag ist noch keine Beziehung erfasst.</p>
           ) : (
+          <div className="grid-scroll">
             <table className="grid">
               <thead>
                 <tr>
@@ -311,6 +312,7 @@ export function ContractSection({
                 })}
               </tbody>
             </table>
+          </div>
           )}
         </>
       )}
