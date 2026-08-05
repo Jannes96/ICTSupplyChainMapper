@@ -57,6 +57,21 @@ in sauberen Ebenen ohne Rückwärtskanten.
 | `DUPLICATE_PROVIDER` | Hinweis | Kennung in B_05.01 mehrfach vergeben |
 | `UNUSED_PROVIDER` | Information | Stammdatensatz ohne Lieferkette |
 
+### Vom Prüf- zum Analysewerkzeug
+
+Die Prüfungen beantworten, ob das Register **korrekt** ist. Ein Klick auf einen Knoten beantwortet,
+was **drinsteht**: *Wenn dieser Dienstleister ausfällt, was steht still?*
+
+Das ist die Frage, die im Auslagerungsmanagement tatsächlich gestellt wird, und der Graph konnte sie
+immer schon beantworten — es fehlte nur eine Erreichbarkeitssuche
+(`domain/graph/reachableFrom.ts`). Sie ist das Gegenstück zum Rang: Der misst den Abstand zum
+Finanzunternehmen, sie misst, was unterhalb hängt.
+
+Gezählt wird bewusst **über alle Verträge hinweg**. Ein Dienstleister in einer Kette ist eine
+Abhängigkeit; derselbe Dienstleister, der vier Ketten trägt, ist eine Konzentration — und das sieht
+man erst, wenn man die Verträge zusammen betrachtet. Ein Unterauftragnehmer, der in zwei Ketten
+vorkommt, wird dabei einmal gezählt und nicht zweimal.
+
 ### Datenmodell
 
 Ein **gerichteter Graph**, ausdrücklich kein Baum:
@@ -345,6 +360,8 @@ Dieser Schritt liefert das tragende Gerüst, noch keine fertige Anwendung.
   getrennt von den fachlichen Befunden ausgewiesen
 - Befund anklicken führt zum Ort: Das Diagramm wechselt auf den betroffenen Vertrag, markiert die
   Knoten, zentriert den Ausschnitt auf sie und blendet den Rest ab
+- Knoten anklicken beantwortet **„Wenn dieser Dienstleister ausfällt, was steht still?"** — alle
+  nachgelagerten Dienstleister und betroffenen Verträge, über das ganze Register hinweg gezählt
 
 **Offen**
 

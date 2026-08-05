@@ -10,6 +10,7 @@ import { providerIndex } from '../domain/model/register.ts';
 import { validateRegister } from '../domain/validation/validateRegister.ts';
 import { ContractRankTable } from '../presentation/components/ContractRankTable.tsx';
 import { FindingList, type LocatedFinding } from '../presentation/components/FindingList.tsx';
+import { ImpactPanel } from '../presentation/components/ImpactPanel.tsx';
 import { RegisterEditor } from '../presentation/components/RegisterEditor.tsx';
 import { SupplyChainDiagram } from '../presentation/components/SupplyChainDiagram.tsx';
 import { locateFinding } from '../presentation/findingFocus.ts';
@@ -52,6 +53,8 @@ export function App() {
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   /** Index of the finding whose nodes are marked in the diagram. */
   const [selectedFinding, setSelectedFinding] = useState<number | null>(null);
+  /** Provider the impact question is being asked about. */
+  const [inspected, setInspected] = useState<NodeId | null>(null);
   const diagramRef = useRef<HTMLElement>(null);
 
   // A stored register is read once, before the first render of the editor.
@@ -112,6 +115,9 @@ export function App() {
 
     setSelectedFinding(index);
     setSelectedRef(focus.contractRef);
+    // One thing at a time: a dimmed diagram and an open impact panel would be
+    // two different answers to two different questions on the same picture.
+    setInspected(null);
     // The findings sit below the diagram, so the diagram has to be brought back
     // into view — otherwise the marking happens off screen.
     diagramRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -120,6 +126,12 @@ export function App() {
   const switchRegister = (next: Mode): void => {
     setMode(next);
     setSelectedRef(null);
+    setSelectedFinding(null);
+    setInspected(null);
+  };
+
+  const inspectNode = (id: NodeId): void => {
+    setInspected((current) => (current === id ? null : id));
     setSelectedFinding(null);
   };
 
@@ -255,7 +267,22 @@ export function App() {
             einen Fehlerbefund.
           </p>
 
-          <SupplyChainDiagram layout={layout} focused={focusedNodes} />
+          <SupplyChainDiagram
+            layout={layout}
+            focused={focusedNodes}
+            onSelectNode={inspectNode}
+          />
+
+          {inspected && (
+            <ImpactPanel
+              contracts={report.contracts}
+              providerId={inspected}
+              providerCount={report.register.providers.length}
+              nameOf={nameOf}
+              onClose={() => setInspected(null)}
+              onSelectContract={setSelectedRef}
+            />
+          )}
 
           <ul className="legend">
             <li>

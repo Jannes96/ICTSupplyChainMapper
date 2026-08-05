@@ -20,6 +20,8 @@ interface SupplyChainDiagramProps {
   readonly layout: LayoutGraph;
   /** Nodes a selected finding points at. Everything else steps back. */
   readonly focused?: ReadonlySet<NodeId> | null;
+  /** Called when a box is chosen, to ask what hangs off that provider. */
+  readonly onSelectNode?: (id: NodeId) => void;
 }
 
 /**
@@ -29,7 +31,11 @@ interface SupplyChainDiagramProps {
  * model, and both are computed and tested elsewhere. This component only turns
  * them into React Flow's node and edge shapes.
  */
-export function SupplyChainDiagram({ layout, focused = null }: SupplyChainDiagramProps) {
+export function SupplyChainDiagram({
+  layout,
+  focused = null,
+  onSelectNode,
+}: SupplyChainDiagramProps) {
   const instance = useRef<ReactFlowInstance<ChainNodeType, Edge> | null>(null);
 
   const { nodes, edges, positions } = useMemo(() => {
@@ -121,6 +127,7 @@ export function SupplyChainDiagram({ layout, focused = null }: SupplyChainDiagra
         onInit={(flow) => {
           instance.current = flow;
         }}
+        onNodeClick={(_, node) => onSelectNode?.(node.id as NodeId)}
         fitView
         fitViewOptions={{ padding: 0.15 }}
         minZoom={0.2}

@@ -382,6 +382,60 @@ code,
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--info) 40%, transparent);
 }
 
+/* --- „Was hängt an diesem Dienstleister?" --------------------------------- */
+
+.impact {
+  margin-top: 0.9rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--info);
+  border-radius: 8px;
+  padding: 0.8rem 1rem 1rem;
+}
+
+.impact__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.impact__head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.impact__lead {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+}
+
+.impact__contracts {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.impact__contract-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.impact__names {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.chain-node {
+  cursor: pointer;
+}
+
 .legend {
   list-style: none;
   display: flex;
