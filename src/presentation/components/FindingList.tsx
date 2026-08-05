@@ -1,5 +1,6 @@
 import type { Finding } from '../../domain/validation/Finding.ts';
 import type { FindingFocus } from '../findingFocus.ts';
+import type { NameResolver } from '../i18n/de.ts';
 import { FINDING_TITLES, SEVERITY_LABELS, describeFinding } from '../i18n/de.ts';
 
 export interface LocatedFinding {
@@ -13,6 +14,8 @@ interface FindingListProps {
   /** Index of the selected entry in `items`, or `null`. */
   readonly selected?: number | null;
   readonly onSelect?: (index: number) => void;
+  /** Turns identification codes into company names for the finding texts. */
+  readonly nameOf?: NameResolver;
 }
 
 /**
@@ -23,7 +26,7 @@ interface FindingListProps {
  * chain — a provider nobody contracts, for instance — stay plain text, because
  * an inert button is worse than none.
  */
-export function FindingList({ items, selected = null, onSelect }: FindingListProps) {
+export function FindingList({ items, selected = null, onSelect, nameOf }: FindingListProps) {
   if (items.length === 0) {
     return <p className="empty">Keine Befunde — Register ist in sich konsistent.</p>;
   }
@@ -43,7 +46,7 @@ export function FindingList({ items, selected = null, onSelect }: FindingListPro
                 <span className="contract">Vertrag {finding.contractRef}</span>
               )}
             </div>
-            <p className="finding__text">{describeFinding(finding)}</p>
+            <p className="finding__text">{describeFinding(finding, nameOf)}</p>
           </>
         );
 

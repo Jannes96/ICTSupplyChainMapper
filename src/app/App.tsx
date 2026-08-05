@@ -5,6 +5,8 @@ import {
   loadEditorState,
   saveEditorState,
 } from '../data/storage/registerStorage.ts';
+import type { NodeId } from '../domain/model/ids.ts';
+import { providerIndex } from '../domain/model/register.ts';
 import { validateRegister } from '../domain/validation/validateRegister.ts';
 import { ContractRankTable } from '../presentation/components/ContractRankTable.tsx';
 import { FindingList, type LocatedFinding } from '../presentation/components/FindingList.tsx';
@@ -80,6 +82,16 @@ export function App() {
     () => report.findings.map((finding) => ({ finding, focus: locateFinding(report, finding) })),
     [report],
   );
+
+  // Findings carry identification codes; the reader needs company names. The
+  // lookup belongs here rather than in the domain — a finding points at the key,
+  // and what that key is called today is a question of presentation.
+  const nameOf = useMemo(() => {
+    const providers = providerIndex(report.register);
+    const { id, legalName } = report.register.financialEntity;
+    return (node: NodeId): string | null =>
+      node === id ? legalName : (providers.get(node)?.legalName ?? null);
+  }, [report]);
 
   // Only mark nodes while the diagram actually shows the finding's contract —
   // otherwise a stale selection would light up whatever node happens to share
@@ -279,7 +291,12 @@ export function App() {
 
       <section>
         <h2>Befunde</h2>
-        <FindingList items={located} selected={selectedFinding} onSelect={showFinding} />
+        <FindingList
+          items={located}
+          selected={selectedFinding}
+          onSelect={showFinding}
+          nameOf={nameOf}
+        />
       </section>
     </main>
   );
